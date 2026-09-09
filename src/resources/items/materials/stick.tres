@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://cfew184k7a5h3"]
+
+[ext_resource type="Texture2D" uid="uid://cxo7kdftwdrmp" path="res://assets/art/world/items/stick_debug.png" id="1_stick"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_item"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_stick"]
+atlas = ExtResource("1_stick")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_item")
+icon = SubResource("AtlasTexture_stick")
+name = "Stick"
+description = "A sturdy wooden stick. (placeholder art)"
+item_id = "stick_wood"
+value = 1
+item_type = 4
+smelt_count = 1
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

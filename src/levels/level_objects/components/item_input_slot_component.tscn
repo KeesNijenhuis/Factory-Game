@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dw11g21si4br4" path="res://src/levels/level_objects/components/item_input_slot_component.gd" id="1_iisc"]
+
+[node name="ItemInputSlotComponent" type="Node2D"]
+script = ExtResource("1_iisc")

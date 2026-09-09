@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/levels/prototype_levels/cave_chunk_debug_view.gd" id="1_script"]
+[ext_resource type="Resource" path="res://src/resources/cave_generation/presets/chunk_cave.tres" id="2_config"]
+
+[node name="CaveChunkDebugView" type="Node2D"]
+script = ExtResource("1_script")
+chunk_config = ExtResource("2_config")
+world_seed = 12345
+grid_radius_chunks = 2

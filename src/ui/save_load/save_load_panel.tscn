@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://sk6dywl3jsil"]
+
+[ext_resource type="Script" uid="uid://cw75gutmed3yj" path="res://src/ui/save_load/save_load_panel.gd" id="1_bfuv1"]
+
+[node name="SaveLoadPanel" type="Control" unique_id=1074855564]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_bfuv1")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=1574784441]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -160.0
+offset_right = 260.0
+offset_bottom = 160.0
+
+[node name="Margin" type="MarginContainer" parent="Panel" unique_id=589098651]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Vbox" type="VBoxContainer" parent="Panel/Margin" unique_id=1656593115]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/Vbox" unique_id=1914972940]
+layout_mode = 2
+text = "Save / Load"
+
+[node name="Container" type="VBoxContainer" parent="Panel/Margin/Vbox" unique_id=1152295346]
+unique_name_in_owner = true
+layout_mode = 2

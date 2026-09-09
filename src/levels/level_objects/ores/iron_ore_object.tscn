@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://cf72ll8xrekf7"]
+
+[ext_resource type="PackedScene" uid="uid://b6e6iwdtom83v" path="res://src/levels/level_objects/ores/ore_node.tscn" id="1_base"]
+[ext_resource type="Resource" uid="uid://qfynpiaxu182" path="res://src/resources/items/ores/iron_ore.tres" id="2_item"]
+[ext_resource type="Shader" uid="uid://gsycmadc2fy7" path="res://src/shaders/ore_shake.gdshader" id="2_yqaqc"]
+[ext_resource type="Texture2D" uid="uid://1beid8fst3mt" path="res://assets/art/world/objects/stone with minerals2.png" id="3_tex"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yqaqc"]
+resource_local_to_scene = true
+shader = ExtResource("2_yqaqc")
+shader_parameter/flash_amount = 0.0
+shader_parameter/shake_intensity = 0.0
+shader_parameter/shake_speed = 20.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iron"]
+atlas = ExtResource("3_tex")
+region = Rect2(32, 16, 32, 16)
+
+[node name="IronOreObject" unique_id=1910034368 instance=ExtResource("1_base")]
+material = SubResource("ShaderMaterial_yqaqc")
+texture = SubResource("AtlasTexture_iron")
+dropped_item_data = ExtResource("2_item")
+respawn_time = 5.0
+
+[node name="HitBox" parent="." index="2" unique_id=585263998]
+visible = true
+
+[node name="DurabilityComponent" parent="." index="3" unique_id=1501886967]
+durability = 5
+
+[node name="ExperienceComponent" parent="." index="4" unique_id=1214602757]
+experience_amount = 8

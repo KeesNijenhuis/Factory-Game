@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://c32xfq3767ydw"]
+
+[ext_resource type="Script" uid="uid://dfssx7rmv6mgv" path="res://src/gameplay/belts/belt_component.gd" id="1_d2v48"]
+[ext_resource type="Resource" uid="uid://18tmu3lt1ghv" path="res://src/gameplay/belts/transport_belt_visuals.tres" id="2_l6sp7"]
+[ext_resource type="Script" uid="uid://dw11g21si4br4" path="res://src/levels/level_objects/components/item_input_slot_component.gd" id="3_mmgq7"]
+[ext_resource type="PackedScene" uid="uid://jsvcsftw3jax" path="res://src/levels/level_objects/components/destructible_component.tscn" id="4_mmgq7"]
+
+[node name="TransportBelt" type="Node2D" unique_id=1566930647]
+y_sort_enabled = true
+script = ExtResource("1_d2v48")
+speed = 10.0
+visual_set = ExtResource("2_l6sp7")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1390656054]
+texture_filter = 1
+
+[node name="InputSlot" type="Node2D" parent="." unique_id=15081384]
+script = ExtResource("3_mmgq7")
+enabled = true
+standalone_capacity = 1
+
+[node name="ItemRenderPos" type="Marker2D" parent="." unique_id=108880540]
+
+[node name="DestructibleComponent" parent="." unique_id=1681252195 instance=ExtResource("4_mmgq7")]
+visible = false
+dropped_item_id = "transport_belt"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://b7awqaqrdme3d"]
+
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_gasmq"]
+[ext_resource type="Texture2D" uid="uid://c08fo8bxyxotf" path="res://assets/art/world/items/item_input_solid_fuel_upgrade.png" id="1_xrdb0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tjprr"]
+atlas = ExtResource("1_xrdb0")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_gasmq")
+icon = SubResource("AtlasTexture_tjprr")
+name = "Output Upgrade"
+item_id = "output_upgrade"
+is_consumable = true
+item_type = 5
+upgrade_type = 2
+upgrade_transfer_interval = 1.0
+upgrade_transfer_amount = 1

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://jqbpv7eacvw2"]
+
+[ext_resource type="Texture2D" uid="uid://c2bwxyibi0vew" path="res://assets/art/world/items/Miners props.png" id="1_silver"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_silver"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_silver"]
+atlas = ExtResource("1_silver")
+region = Rect2(48, 16, 16, 16)
+
+[resource]
+script = ExtResource("2_silver")
+icon = SubResource("AtlasTexture_silver")
+name = "Silver Ore"
+description = "A chunk of silver ore"
+item_id = "ore_silver"
+value = 12
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

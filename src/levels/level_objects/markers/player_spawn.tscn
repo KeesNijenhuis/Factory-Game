@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://l56q4xrxenhk"]
+
+[ext_resource type="Script" uid="uid://d3n1tywejg4ev" path="res://src/levels/level_objects/markers/player_spawn.gd" id="1_chcc0"]
+[ext_resource type="Texture2D" uid="uid://po07jj54ihbe" path="res://assets/art/entities/player/Idle.png" id="2_chcc0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_chcc0"]
+atlas = ExtResource("2_chcc0")
+region = Rect2(0, 0, 32, 32)
+
+[node name="PlayerSpawn" type="Marker2D" unique_id=758546223]
+script = ExtResource("1_chcc0")
+
+[node name="ReferenceVisual" type="Node2D" parent="." unique_id=1769756522]
+
+[node name="ReferenceSprite" type="Sprite2D" parent="ReferenceVisual" unique_id=884973571]
+texture = SubResource("AtlasTexture_chcc0")

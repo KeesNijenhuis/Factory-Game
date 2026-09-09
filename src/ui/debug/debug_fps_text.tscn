@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://beety0eo2irp4"]
+
+[ext_resource type="Script" uid="uid://d1rju8c3eva4u" path="res://src/ui/debug/debug_fps_text.gd" id="1_dq46r"]
+
+[node name="DebugFPSText" type="Control" unique_id=1672623461]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_dq46r")
+
+[node name="FPSLabel" type="Label" parent="." unique_id=1818218386]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -13.0
+offset_right = 40.0
+grow_vertical = 0
+theme_override_colors/font_color = Color(2.695322e-06, 0.57779455, 3.85046e-07, 1)
+theme_override_font_sizes/font_size = 9
+text = "34"

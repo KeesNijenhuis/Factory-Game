@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://bpokla4mbwsv3"]
+
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_2uvru"]
+[ext_resource type="Texture2D" uid="uid://8km30mxn72py" path="res://assets/art/world/objects/torch.png" id="1_s3nkb"]
+[ext_resource type="PackedScene" uid="uid://bcb1tv26ck3qg" path="res://src/levels/level_objects/decoration/torch.tscn" id="2_1le23"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ugi5m"]
+atlas = ExtResource("1_s3nkb")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_2uvru")
+icon = SubResource("AtlasTexture_ugi5m")
+name = "Torch"
+item_id = "torch"
+is_consumable = true
+placed_scene = ExtResource("2_1le23")
+item_type = 0

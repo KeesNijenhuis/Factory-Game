@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://sqwdoj358p6m"]
+
+[ext_resource type="Texture2D" uid="uid://2gswyekgcbvu" path="res://assets/art/ui/icons/tools/wood/Sword.png" id="1_1ebok"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_bxdld"]
+[ext_resource type="Resource" uid="uid://dcbyw6jkxand8" path="res://src/resources/items/tools/tiers/tool_tier_wood.tres" id="3_wgn2j"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u8ah5"]
+atlas = ExtResource("1_1ebok")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_bxdld")
+icon = SubResource("AtlasTexture_u8ah5")
+name = "Wooden Sword"
+description = "Effective....."
+item_id = "sword_wood"
+max_stack_size = 1
+item_type = 2
+tool_type = 5
+tool_tier = ExtResource("3_wgn2j")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

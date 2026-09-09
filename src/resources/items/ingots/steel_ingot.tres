@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://buu67vqcs7tk7"]
+
+[ext_resource type="Texture2D" uid="uid://smya62hnwu7c" path="res://assets/art/world/items/item_steel_ingot.png" id="1_stlpng"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_tc1g0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_piv0u"]
+atlas = ExtResource("1_stlpng")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_tc1g0")
+icon = SubResource("AtlasTexture_piv0u")
+name = "Steel Ingot"
+description = "A bar of refined steel, smelted from two different ores in a blast furnace."
+item_id = "ingot_steel"
+value = 20
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

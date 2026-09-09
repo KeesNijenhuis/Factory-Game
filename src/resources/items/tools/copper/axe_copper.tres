@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://x8gta5ux1exq"]
+
+[ext_resource type="Texture2D" uid="uid://ca2h5v4lrkjtw" path="res://assets/art/ui/icons/tools/copper/Axe.png" id="1_w6v5j"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_wv37n"]
+[ext_resource type="Resource" uid="uid://7jmco017ydjv" path="res://src/resources/items/tools/tiers/tool_tier_copper.tres" id="3_f0k75"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mvwmf"]
+atlas = ExtResource("1_w6v5j")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_wv37n")
+icon = SubResource("AtlasTexture_mvwmf")
+name = "Copper Axe"
+item_id = "axe_copper"
+max_stack_size = 1
+value = 40
+item_type = 2
+tool_type = 2
+tool_tier = ExtResource("3_f0k75")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

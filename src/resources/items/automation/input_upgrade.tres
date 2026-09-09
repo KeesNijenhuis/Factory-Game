@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://de3ginsy3n6g2"]
+
+[ext_resource type="Texture2D" uid="uid://dhc0q7v48ut1" path="res://assets/art/world/items/item_input_upgrade.png" id="1_cspsp"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_k2kml"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h7tcp"]
+atlas = ExtResource("1_cspsp")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_k2kml")
+icon = SubResource("AtlasTexture_h7tcp")
+name = "Input Upgrade"
+item_id = "input_upgrade"
+is_consumable = true
+item_type = 5
+upgrade_type = 1
+upgrade_transfer_interval = 1.0
+upgrade_transfer_amount = 1

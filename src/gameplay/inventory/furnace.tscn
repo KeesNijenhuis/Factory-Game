@@ -1,0 +1,161 @@
+[gd_scene format=3 uid="uid://fte5maapa3kw"]
+
+[ext_resource type="Script" uid="uid://uu7iruv3ipp4" path="res://src/gameplay/inventory/furnace.gd" id="1_furnace"]
+[ext_resource type="Texture2D" uid="uid://u485brmn6j5k" path="res://assets/art/world/objects/Furnace.png" id="2_sprite"]
+[ext_resource type="Script" uid="uid://b08errpxtvivd" path="res://src/ui/inventory/furnace_inventory.gd" id="3_inventory"]
+[ext_resource type="Texture2D" uid="uid://bqv6odfwn5e62" path="res://assets/art/world/point_light_texture.png" id="4_d0a2t"]
+[ext_resource type="Script" uid="uid://dw11g21si4br4" path="res://src/levels/level_objects/components/item_input_slot_component.gd" id="5_522hu"]
+[ext_resource type="Script" path="res://src/levels/level_objects/components/solid_fuel_input_slot_component.gd" id="5_sfisc"]
+[ext_resource type="Script" uid="uid://8qmhgqcrq5ej" path="res://src/levels/level_objects/components/item_output_slot_component.gd" id="6_61i8g"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_right.tres" id="6_drvn8"]
+[ext_resource type="Script" uid="uid://d3xw3u81c32bl" path="res://src/levels/level_objects/components/slot_locations_component.gd" id="7_n6eyt"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_down.tres" id="7_v5hru"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_up.tres" id="8_m6j2w"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_left.tres" id="10_2y16m"]
+[ext_resource type="PackedScene" uid="uid://jsvcsftw3jax" path="res://src/levels/level_objects/components/destructible_component.tscn" id="12_2y16m"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame1"]
+atlas = ExtResource("2_sprite")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame2"]
+atlas = ExtResource("2_sprite")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame3"]
+atlas = ExtResource("2_sprite")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame4"]
+atlas = ExtResource("2_sprite")
+region = Rect2(128, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame0"]
+atlas = ExtResource("2_sprite")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_furnace"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame4")
+}],
+"loop": 1,
+"name": &"burning",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame0")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 1.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ssrcd"]
+size = Vector2(18, 20.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_furnace"]
+size = Vector2(18, 6.625)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_n6eyt"]
+size = Vector2(18, 13.5)
+
+[node name="Furnace" type="Area2D" unique_id=1097489568]
+z_index = 1
+collision_layer = 2
+collision_mask = 16
+script = ExtResource("1_furnace")
+interaction_range = 30.0
+
+[node name="Inventory" type="Node" parent="." unique_id=8148267]
+script = ExtResource("3_inventory")
+rows = 1
+columns = 3
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=77918575]
+position = Vector2(1, -7)
+sprite_frames = SubResource("SpriteFrames_furnace")
+animation = &"idle"
+
+[node name="InteractionCollisionShape" type="CollisionShape2D" parent="." unique_id=31312946]
+visible = false
+position = Vector2(-1, -9.75)
+shape = SubResource("RectangleShape2D_ssrcd")
+
+[node name="PlayerCollisionBody" type="StaticBody2D" parent="." unique_id=1469338461]
+collision_mask = 2
+
+[node name="PlayerCollisionShape" type="CollisionShape2D" parent="PlayerCollisionBody" unique_id=1618116013]
+position = Vector2(0, -0.6875)
+shape = SubResource("RectangleShape2D_furnace")
+debug_color = Color(0.8855444, 0.28859735, 0.43200466, 0.41960785)
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=1894906827]
+visible = false
+energy = 0.5
+texture = ExtResource("4_d0a2t")
+texture_scale = 0.6
+
+[node name="OreInputSlot" type="Node2D" parent="." unique_id=809368481]
+script = ExtResource("5_522hu")
+facing = "left"
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 0
+
+[node name="SolidFuelInputSlot" type="Node2D" parent="." unique_id=1644445570]
+script = ExtResource("5_sfisc")
+facing = "up"
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 1
+
+[node name="OutputSlot" type="Node2D" parent="." unique_id=561332735]
+script = ExtResource("6_61i8g")
+facing = "right"
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 2
+
+[node name="SlotLocationsComponent" type="Node2D" parent="." unique_id=111038017]
+script = ExtResource("7_n6eyt")
+
+[node name="ClickArea" type="Area2D" parent="SlotLocationsComponent" unique_id=1047991006]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SlotLocationsComponent/ClickArea" unique_id=1762784945]
+z_index = 4
+position = Vector2(0, 0.25)
+shape = SubResource("RectangleShape2D_n6eyt")
+
+[node name="Up" type="Sprite2D" parent="SlotLocationsComponent" unique_id=674615359]
+position = Vector2(0, -5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("8_m6j2w")
+
+[node name="Down" type="Sprite2D" parent="SlotLocationsComponent" unique_id=1693461745]
+position = Vector2(0, 5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("7_v5hru")
+
+[node name="Left" type="Sprite2D" parent="SlotLocationsComponent" unique_id=792153497]
+position = Vector2(-6, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("10_2y16m")
+
+[node name="Right" type="Sprite2D" parent="SlotLocationsComponent" unique_id=2027447277]
+position = Vector2(6, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("6_drvn8")
+
+[node name="DestructibleComponent" parent="." unique_id=1681252195 instance=ExtResource("12_2y16m")]
+visible = false
+position = Vector2(-1, 4)
+dropped_item_id = "furnace"

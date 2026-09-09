@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://bxbw4lln5kgfr"]
+
+[ext_resource type="Script" uid="uid://bft8k5bltsty0" path="res://src/levels/level_objects/ladder.gd" id="1_ldrgd"]
+[ext_resource type="Texture2D" uid="uid://bbfeoorh8fit5" path="res://assets/art/world/objects/Stairs.png" id="2_stairs"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ladder"]
+atlas = ExtResource("2_stairs")
+region = Rect2(16, 16, 16, 16)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ladder"]
+radius = 8.0
+
+[node name="Ladder" type="Area2D" unique_id=917183373]
+z_index = 1
+collision_layer = 2
+collision_mask = 16
+script = ExtResource("1_ldrgd")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=279031545]
+texture = SubResource("AtlasTexture_ladder")
+
+[node name="InteractionCollisionShape" type="CollisionShape2D" parent="." unique_id=1544156154]
+shape = SubResource("CircleShape2D_ladder")

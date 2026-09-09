@@ -1,0 +1,35 @@
+Technology Tier 1:
+- Wooden Tools
+- Oak Trees
+- Crafting Bench
+- Stone Furnace
+- Charcoal Kiln
+- Wooden chests
+- Cattle
+
+Technology Tier 2:
+- Copper Tools
+- Coal ore
+- Rubber Trees
+- Rubber
+- Copper Chest
+- Input / Output Components ( to be placed on chest/furnace)
+
+Technology Tier 3:
+- Iron Tools
+- Iron components
+- Conveyor belts tier 1
+- 
+
+
+CHANGES:
+- remove item id from items, derive it from the name
+
+
+Recipe editor:
+- 	right click on item in list to be able to paint it in the grid (draw a rectangle around it to 
+	disable this, right click again, or start dragging another item to disable)
+-	saved text should disappear after a delay
+- 	make it an always floating window
+-	give complete flexibility on window and panel size
+

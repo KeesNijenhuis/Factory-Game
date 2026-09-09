@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://47a65yljncsn"]
+
+[ext_resource type="Texture2D" uid="uid://c5woh8stsovvm" path="res://assets/art/ui/hud.png" id="1_hud"]
+[ext_resource type="Script" uid="uid://bd8efvj8qo766" path="res://src/levels/level_objects/components/action_denied_indicator.gd" id="2_denied"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_denied"]
+atlas = ExtResource("1_hud")
+region = Rect2(128, 16, 16, 16)
+
+[node name="ActionDeniedIndicator" type="Sprite2D" unique_id=574202382]
+z_index = 12
+texture = SubResource("AtlasTexture_denied")
+script = ExtResource("2_denied")

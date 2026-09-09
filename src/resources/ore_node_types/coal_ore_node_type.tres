@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="OreNodeType" format=3]
+
+[ext_resource type="Script" path="res://src/resources/ore_node_types/ore_node_type.gd" id="1_coalnt"]
+[ext_resource type="PackedScene" uid="uid://i8t3rmwm1i2a" path="res://src/levels/level_objects/ores/coal_ore_object.tscn" id="2_coalnt"]
+
+[resource]
+script = ExtResource("1_coalnt")
+ore_name = "Coal"
+scene = ExtResource("2_coalnt")
+metadata/_custom_type_script = "res://src/resources/ore_node_types/ore_node_type.gd"

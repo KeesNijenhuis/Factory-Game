@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://bw72p664kyyec"]
+
+[ext_resource type="Texture2D" uid="uid://s1e53hx50abm" path="res://assets/art/world/objects/Miners props5.png" id="1_143wt"]
+[ext_resource type="PackedScene" uid="uid://l56q4xrxenhk" path="res://src/levels/level_objects/markers/player_spawn.tscn" id="2_jks0i"]
+[ext_resource type="TileSet" uid="uid://d2kvnphfhr7j0" path="res://assets/art/world/tilesets/caves_tileset.tres" id="3_d0tel"]
+[ext_resource type="PackedScene" uid="uid://chkdkyhlm2g81" path="res://src/gameplay/camera/player_camera.tscn" id="3_dwjxi"]
+[ext_resource type="Script" uid="uid://da3xhwsrc74o2" path="res://src/levels/prototype_levels/prototype_level.gd" id="4_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6sef"]
+atlas = ExtResource("1_143wt")
+region = Rect2(0, 0, 48, 48)
+
+[node name="BoilerplateLevel" type="Node2D" unique_id=1289530337]
+script = ExtResource("4_script")
+
+[node name="Background" type="Node2D" parent="." unique_id=260665743]
+
+[node name="Sprite2D" type="Sprite2D" parent="Background" unique_id=553927233]
+scale = Vector2(50, 50)
+texture = SubResource("AtlasTexture_d6sef")
+
+[node name="Tilemaps" type="Node2D" parent="." unique_id=956943520]
+
+[node name="Ground" type="TileMapLayer" parent="Tilemaps" unique_id=901720922]
+tile_set = ExtResource("3_d0tel")
+
+[node name="Paths" type="TileMapLayer" parent="Tilemaps" unique_id=1692226981]
+
+[node name="Walls" type="TileMapLayer" parent="Tilemaps" unique_id=767206433]
+
+[node name="Objects" type="TileMapLayer" parent="Tilemaps" unique_id=1700850395]
+
+[node name="LevelObjects" type="Node2D" parent="." unique_id=1112671457]
+
+[node name="PlayerSpawn" parent="LevelObjects" unique_id=758546223 instance=ExtResource("2_jks0i")]
+
+[node name="PlayerCamera" parent="LevelObjects" unique_id=771489295 instance=ExtResource("3_dwjxi")]
+
+[node name="Environment" type="Node2D" parent="." unique_id=387672938]
+
+[node name="CanvasModulate" type="CanvasModulate" parent="Environment" unique_id=127944098]
+color = Color(0.3706506, 0.40175825, 0.39083531, 1)

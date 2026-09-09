@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://cby07bhs3sihn"]
+
+[ext_resource type="Texture2D" uid="uid://c2bwxyibi0vew" path="res://assets/art/world/items/Miners props.png" id="1_m0kny"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_vw8p4"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ohfcs"]
+atlas = ExtResource("1_m0kny")
+region = Rect2(128, 16, 16, 16)
+
+[resource]
+script = ExtResource("1_vw8p4")
+icon = SubResource("AtlasTexture_ohfcs")
+name = "Coal Ore"
+description = "	"
+item_id = "ore_coal"
+value = 3
+item_type = 4
+smelt_count = 8

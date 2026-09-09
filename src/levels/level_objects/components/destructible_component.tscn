@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://jsvcsftw3jax"]
+
+[ext_resource type="Script" path="res://src/levels/level_objects/components/destructible_component.gd" id="1_dstrc"]
+[ext_resource type="PackedScene" uid="uid://b2diwwvs6lng4" path="res://src/levels/level_objects/components/hit_box.tscn" id="2_dstrc"]
+[ext_resource type="PackedScene" uid="uid://do0w82j8aq80q" path="res://src/levels/level_objects/components/durability_component.tscn" id="3_dstrc"]
+[ext_resource type="PackedScene" uid="uid://c3xqe1jr0h1ye" path="res://src/levels/level_objects/components/hit_flash_component.tscn" id="4_dstrc"]
+
+[node name="DestructibleComponent" type="Node2D" unique_id=1681252195]
+script = ExtResource("1_dstrc")
+
+[node name="HitBox" parent="." unique_id=539492466 instance=ExtResource("2_dstrc")]
+
+[node name="DurabilityComponent" parent="." unique_id=866315890 instance=ExtResource("3_dstrc")]
+
+[node name="HitFlashComponent" parent="." instance=ExtResource("4_dstrc")]

@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://b5ru12aeygiks"]
+
+[ext_resource type="Script" uid="uid://b36t2f5rb35yp" path="res://src/ui/debug/item_spawn_menu.gd" id="1_menu"]
+
+[node name="ItemSpawnMenu" type="Control" unique_id=1833747495]
+layout_mode = 3
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=356327639]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 8.0
+offset_top = -108.0
+offset_right = 164.0
+offset_bottom = 108.0
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=507926979]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=26445599]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=1936171517]
+layout_mode = 2
+text = "Item Spawner (F3)"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1588641151]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemsGrid" type="GridContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer" unique_id=1518178571]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 6

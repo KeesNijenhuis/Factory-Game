@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="TerrainTemplate" format=3 uid="uid://dn5pdtilvrpuk"]
+
+[ext_resource type="Script" uid="uid://cxpktxofbqfdj" path="res://addons/terrain_bulk_editor/terrain_template.gd" id="1_akt7k"]
+
+[resource]
+script = ExtResource("1_akt7k")
+template_name = "Wall_Ore_Base_Overlay"
+size = Vector2i(4, 1)
+cells = Array[Dictionary]([{
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: true,
+15: false
+},
+"has_collision": false,
+"physics_layer": 0,
+"polygon": PackedVector2Array()
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": false,
+"physics_layer": 0,
+"polygon": PackedVector2Array()
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": false,
+"physics_layer": 0,
+"polygon": PackedVector2Array()
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": false,
+"physics_layer": 0,
+"polygon": PackedVector2Array()
+}])

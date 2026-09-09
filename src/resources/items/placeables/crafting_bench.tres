@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://speikbnlp5lg"]
+
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_6shaf"]
+[ext_resource type="Texture2D" uid="uid://c4de1dht3g8jl" path="res://assets/art/world/objects/cave/Workbench.png" id="1_c0i6c"]
+[ext_resource type="PackedScene" uid="uid://gq81eiwusr0c" path="res://src/gameplay/inventory/crafting_bench.tscn" id="2_ul7q8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_585ka"]
+atlas = ExtResource("1_c0i6c")
+region = Rect2(0, 0, 32, 32)
+
+[resource]
+script = ExtResource("1_6shaf")
+icon = SubResource("AtlasTexture_585ka")
+name = "Crafting Bench"
+item_id = "crafting_bench"
+placed_scene = ExtResource("2_ul7q8")

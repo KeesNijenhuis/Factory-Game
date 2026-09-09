@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://bejoamihradao"]
+
+[ext_resource type="Script" uid="uid://cjkvfedmw16yy" path="res://src/levels/prototype_levels/procedural_cave_level.gd" id="1_root"]
+[ext_resource type="TileSet" uid="uid://d2kvnphfhr7j0" path="res://assets/art/world/tilesets/caves_tileset.tres" id="2_tileset"]
+[ext_resource type="Script" uid="uid://b7lis1fgojdpe" path="res://src/levels/prototype_levels/cave_ground_layer.gd" id="3_ground"]
+[ext_resource type="Script" uid="uid://by7rf0qt7nch6" path="res://src/levels/prototype_levels/cave_walls_layer.gd" id="4_walls"]
+[ext_resource type="Script" uid="uid://bt8imt1oasoyg" path="res://src/levels/prototype_levels/cave_ore_overlay_layer.gd" id="5_oreoverlay"]
+[ext_resource type="PackedScene" uid="uid://l56q4xrxenhk" path="res://src/levels/level_objects/markers/player_spawn.tscn" id="6_spawn"]
+[ext_resource type="PackedScene" uid="uid://chkdkyhlm2g81" path="res://src/gameplay/camera/player_camera.tscn" id="7_camera"]
+[ext_resource type="Script" uid="uid://whbftth3e6i6" path="res://src/levels/prototype_levels/cave_builder.gd" id="8_builder"]
+[ext_resource type="Script" uid="uid://duo8ajl5u780j" path="res://src/resources/cave_generation/cave_ore_node_config.gd" id="9_cd2r1"]
+[ext_resource type="Script" uid="uid://crvbumijdhsnk" path="res://src/resources/cave_generation/cave_ore_vein_config.gd" id="10_nkk1j"]
+[ext_resource type="Script" uid="uid://ngg3sdct6jp3" path="res://src/levels/prototype_levels/cave_chunk_streamer.gd" id="10_streamer"]
+[ext_resource type="Script" uid="uid://bq6dl8wmxqcc1" path="res://src/resources/cave_generation/cave_generation_config.gd" id="11_1tsxc"]
+[ext_resource type="Resource" path="res://src/resources/cave_generation/presets/default_streaming.tres" id="11_streaming_config"]
+
+[sub_resource type="Resource" id="Resource_l6ec0"]
+script = ExtResource("11_1tsxc")
+map_width = 1000
+map_height = 1000
+room_placement_attempts = 10
+metadata/_custom_type_script = "uid://bq6dl8wmxqcc1"
+
+[node name="ProceduralCaveLevel" type="Node2D" unique_id=673103904]
+script = ExtResource("1_root")
+
+[node name="Tilemaps" type="Node2D" parent="." unique_id=155001495]
+y_sort_enabled = true
+
+[node name="Bedrock" type="TileMapLayer" parent="Tilemaps" unique_id=2116530893]
+tile_set = ExtResource("2_tileset")
+
+[node name="Ground" type="TileMapLayer" parent="Tilemaps" unique_id=1887946235]
+tile_set = ExtResource("2_tileset")
+script = ExtResource("3_ground")
+
+[node name="Liquids" type="TileMapLayer" parent="Tilemaps" unique_id=1647668553]
+tile_set = ExtResource("2_tileset")
+
+[node name="Walls" type="TileMapLayer" parent="Tilemaps" unique_id=2044672071]
+z_index = 2
+y_sort_enabled = true
+tile_set = ExtResource("2_tileset")
+script = ExtResource("4_walls")
+ore_overlay_layer_path = NodePath("../OreOverlay")
+
+[node name="OreOverlay" type="TileMapLayer" parent="Tilemaps" unique_id=1429596814]
+z_index = 2
+y_sort_enabled = true
+tile_set = ExtResource("2_tileset")
+script = ExtResource("5_oreoverlay")
+walls_layer_path = NodePath("../Walls")
+
+[node name="Objects" type="TileMapLayer" parent="Tilemaps" unique_id=664693225]
+z_index = 1
+y_sort_enabled = true
+tile_set = ExtResource("2_tileset")
+
+[node name="LevelObjects" type="Node2D" parent="." unique_id=1527484917]
+
+[node name="PlayerSpawn" parent="LevelObjects" unique_id=1507817562 instance=ExtResource("6_spawn")]
+
+[node name="PlayerCamera" parent="LevelObjects" unique_id=1530581749 instance=ExtResource("7_camera")]
+
+[node name="CaveBuilder" type="Node" parent="LevelObjects" unique_id=1453199726]
+script = ExtResource("8_builder")
+config = SubResource("Resource_l6ec0")
+walls_layer_path = NodePath("../../Tilemaps/Walls")
+ground_layer_path = NodePath("../../Tilemaps/Ground")
+ore_overlay_layer_path = NodePath("../../Tilemaps/OreOverlay")
+liquids_layer_path = NodePath("../../Tilemaps/Liquids")
+objects_layer_path = NodePath("../../Tilemaps/Objects")
+
+[node name="CaveChunkStreamer" type="Node" parent="LevelObjects" unique_id=430961181]
+script = ExtResource("10_streamer")
+streaming_config = ExtResource("11_streaming_config")
+cave_builder_path = NodePath("../CaveBuilder")

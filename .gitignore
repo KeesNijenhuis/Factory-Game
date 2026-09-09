@@ -1,0 +1,6 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Claude Code session-local state (not meaningful across machines/clones)
+.claude/scheduled_tasks.lock

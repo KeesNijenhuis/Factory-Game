@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://bhl1j2irq2jjq"]
+
+[ext_resource type="Script" uid="uid://cvo871pwec1nh" path="res://src/ui/save_load/save_slot_row.gd" id="1_ep7tl"]
+
+[node name="SaveSlotRow" type="HBoxContainer" unique_id=901683594]
+script = ExtResource("1_ep7tl")
+
+[node name="Label" type="Label" parent="." unique_id=549673761]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+text = "Slot -- empty"
+
+[node name="SaveButton" type="Button" parent="." unique_id=705762610]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+
+[node name="LoadButton" type="Button" parent="." unique_id=1063354004]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Load"
+
+[node name="DeleteButton" type="Button" parent="." unique_id=530708762]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Delete"

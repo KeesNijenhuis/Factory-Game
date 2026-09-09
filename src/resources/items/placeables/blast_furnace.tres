@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://b0ev80xs06rok"]
+
+[ext_resource type="Texture2D" uid="uid://u485brmn6j5k" path="res://assets/art/world/objects/Furnace.png" id="1_furnace_tex"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_item"]
+[ext_resource type="PackedScene" uid="uid://csxavp14usnqf" path="res://src/gameplay/inventory/blast_furnace.tscn" id="3_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blast_furnace_icon"]
+atlas = ExtResource("1_furnace_tex")
+region = Rect2(32, 0, 32, 32)
+
+[resource]
+script = ExtResource("2_item")
+icon = SubResource("AtlasTexture_blast_furnace_icon")
+name = "Blast Furnace"
+description = "A bigger furnace with two input slots, for recipes that need two different ingredients at once. Takes up a 2x2 area. (placeholder art)"
+item_id = "blast_furnace"
+max_stack_size = 5
+value = 40
+placed_scene = ExtResource("3_scene")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

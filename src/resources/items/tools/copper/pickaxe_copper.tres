@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://dbwkg3afwnasl"]
+
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_g84je"]
+[ext_resource type="Texture2D" uid="uid://cearct2l6p8km" path="res://assets/art/ui/icons/tools/copper/Pickaxe.png" id="1_hdqhx"]
+[ext_resource type="Resource" uid="uid://7jmco017ydjv" path="res://src/resources/items/tools/tiers/tool_tier_copper.tres" id="3_p4dw2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mvwmf"]
+atlas = ExtResource("1_hdqhx")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_g84je")
+icon = SubResource("AtlasTexture_mvwmf")
+name = "Copper Pickaxe"
+item_id = "pickaxe_copper"
+max_stack_size = 1
+value = 40
+item_type = 2
+tool_type = 1
+tool_tier = ExtResource("3_p4dw2")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

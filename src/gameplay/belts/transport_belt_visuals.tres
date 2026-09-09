@@ -1,0 +1,91 @@
+[gd_resource type="Resource" script_class="BeltVisualSet" format=3 uid="uid://18tmu3lt1ghv"]
+
+[ext_resource type="Script" uid="uid://bg2q32shbjdsj" path="res://src/gameplay/belts/belt_visual_set.gd" id="1_set"]
+[ext_resource type="Script" uid="uid://b75736ghjkuy4" path="res://src/gameplay/belts/belt_visual_entry.gd" id="2_entry"]
+[ext_resource type="Texture2D" uid="uid://dyjytge25wbt4" path="res://assets/art/world/objects/test_conveyor_belt_bg.png" id="3_atlas"]
+[ext_resource type="Texture2D" uid="uid://c5uimj0hf03bb" path="res://assets/art/world/objects/belt_flow_marker.png" id="4_marker"]
+
+[sub_resource type="Resource" id="Entry_moving_right"]
+script = ExtResource("2_entry")
+anim_name = &"moving_right"
+
+[sub_resource type="Resource" id="Entry_moving_left"]
+script = ExtResource("2_entry")
+anim_name = &"moving_left"
+region = Rect2(0, 16, 16, 16)
+direction = -1
+
+[sub_resource type="Resource" id="Entry_moving_down"]
+script = ExtResource("2_entry")
+anim_name = &"moving_down"
+region = Rect2(0, 32, 16, 16)
+axis = "y"
+
+[sub_resource type="Resource" id="Entry_moving_up"]
+script = ExtResource("2_entry")
+anim_name = &"moving_up"
+region = Rect2(16, 32, 16, 16)
+axis = "y"
+direction = -1
+
+[sub_resource type="Resource" id="Entry_down_right"]
+script = ExtResource("2_entry")
+anim_name = &"down_right"
+region = Rect2(32, 32, 16, 16)
+lo = 2
+
+[sub_resource type="Resource" id="Entry_left_down"]
+script = ExtResource("2_entry")
+anim_name = &"left_down"
+region = Rect2(48, 32, 16, 16)
+axis = "y"
+lo = 2
+
+[sub_resource type="Resource" id="Entry_right_up"]
+script = ExtResource("2_entry")
+anim_name = &"right_up"
+region = Rect2(32, 48, 16, 16)
+axis = "y"
+direction = -1
+hi = 14
+
+[sub_resource type="Resource" id="Entry_up_left"]
+script = ExtResource("2_entry")
+anim_name = &"up_left"
+region = Rect2(48, 48, 16, 16)
+direction = -1
+hi = 14
+
+[sub_resource type="Resource" id="Entry_right_down"]
+script = ExtResource("2_entry")
+anim_name = &"right_down"
+region = Rect2(32, 64, 16, 16)
+direction = -1
+lo = 2
+
+[sub_resource type="Resource" id="Entry_down_left"]
+script = ExtResource("2_entry")
+anim_name = &"down_left"
+region = Rect2(48, 64, 16, 16)
+axis = "y"
+direction = -1
+lo = 2
+
+[sub_resource type="Resource" id="Entry_up_right"]
+script = ExtResource("2_entry")
+anim_name = &"up_right"
+region = Rect2(32, 80, 16, 16)
+axis = "y"
+hi = 14
+
+[sub_resource type="Resource" id="Entry_left_up"]
+script = ExtResource("2_entry")
+anim_name = &"left_up"
+region = Rect2(48, 80, 16, 16)
+hi = 14
+
+[resource]
+script = ExtResource("1_set")
+atlas = ExtResource("3_atlas")
+marker_texture = ExtResource("4_marker")
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_moving_right"), SubResource("Entry_moving_left"), SubResource("Entry_moving_down"), SubResource("Entry_moving_up"), SubResource("Entry_down_right"), SubResource("Entry_left_down"), SubResource("Entry_right_up"), SubResource("Entry_up_left"), SubResource("Entry_right_down"), SubResource("Entry_down_left"), SubResource("Entry_up_right"), SubResource("Entry_left_up")])

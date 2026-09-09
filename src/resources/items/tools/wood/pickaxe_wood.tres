@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://bjtupv70qmlgj"]
+
+[ext_resource type="Texture2D" uid="uid://cowuphktyby" path="res://assets/art/ui/icons/tools/wood/Pickaxe.png" id="1_j287o"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_x573s"]
+[ext_resource type="Resource" uid="uid://dcbyw6jkxand8" path="res://src/resources/items/tools/tiers/tool_tier_wood.tres" id="3_51r30"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_arii2"]
+atlas = ExtResource("1_j287o")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_x573s")
+icon = SubResource("AtlasTexture_arii2")
+name = "Wooden Pickaxe"
+description = "Made of.... Wood?"
+item_id = "pickaxe_wood"
+max_stack_size = 1
+item_type = 2
+tool_type = 1
+tool_tier = ExtResource("3_51r30")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

@@ -1,0 +1,164 @@
+[gd_resource type="Resource" script_class="CraftingRecipeDatabase" format=3 uid="uid://dy5y8cwbaa7sa"]
+
+[ext_resource type="Script" uid="uid://chjw7k62qsi6v" path="res://src/resources/crafting/shaped_crafting_recipe.gd" id="1_5a3m2"]
+[ext_resource type="Script" uid="uid://c53solexpt7ti" path="res://src/resources/crafting/crafting_recipe_database.gd" id="2_n1uyq"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_o4ihr"]
+[ext_resource type="Resource" uid="uid://cfew184k7a5h3" path="res://src/resources/items/materials/stick.tres" id="3_blson"]
+[ext_resource type="Resource" uid="uid://bwdsm88q0uqlx" path="res://src/resources/items/materials/oak_plank.tres" id="4_i1rct"]
+[ext_resource type="Resource" uid="uid://c3tkvw32xnwtu" path="res://src/resources/items/materials/oak_log.tres" id="5_ipexy"]
+[ext_resource type="Resource" uid="uid://dq7r5i7ejgx8g" path="res://src/resources/items/tools/wood/axe_wood.tres" id="6_norwg"]
+[ext_resource type="Resource" uid="uid://bjtupv70qmlgj" path="res://src/resources/items/tools/wood/pickaxe_wood.tres" id="7_t6i4t"]
+[ext_resource type="Resource" uid="uid://cl6a7pyjihr82" path="res://src/resources/items/tools/wood/shovel_wood.tres" id="8_ft138"]
+[ext_resource type="Resource" uid="uid://sqwdoj358p6m" path="res://src/resources/items/tools/wood/sword_wood.tres" id="9_61viq"]
+[ext_resource type="Resource" uid="uid://bkryr8tsido2k" path="res://src/resources/items/placeables/chest.tres" id="10_chest"]
+[ext_resource type="Resource" uid="uid://1b7wlbipjp3s" path="res://src/resources/items/placeables/furnace.tres" id="11_furnace"]
+[ext_resource type="Resource" uid="uid://d15hdyqcq7lmt" path="res://src/resources/items/ingots/iron_ingot.tres" id="12_iron"]
+[ext_resource type="Resource" uid="uid://qhaew6lssqvu" path="res://src/resources/items/materials/rock.tres" id="12_rn0gn"]
+[ext_resource type="Resource" uid="uid://7ab1rv6ap4qb" path="res://src/resources/items/tools/wrench.tres" id="13_i1rct"]
+[ext_resource type="Resource" uid="uid://dbwkg3afwnasl" path="res://src/resources/items/tools/copper/pickaxe_copper.tres" id="14_64fea"]
+[ext_resource type="Resource" uid="uid://cn6mgv327jw2f" path="res://src/resources/items/ingots/copper_ingot.tres" id="15_rn0gn"]
+[ext_resource type="Resource" uid="uid://x8gta5ux1exq" path="res://src/resources/items/tools/copper/axe_copper.tres" id="16_2ujny"]
+[ext_resource type="Resource" uid="uid://dpfvfi8s4vbru" path="res://src/resources/items/tools/copper/shovel_copper.tres" id="17_yqvqx"]
+[ext_resource type="Resource" uid="uid://b50lb1x3y6nby" path="res://src/resources/items/tools/copper/sword_copper.tres" id="18_hfdxt"]
+[ext_resource type="Resource" uid="uid://dvvehaeivvxfy" path="res://src/resources/items/tools/iron/axe_iron.tres" id="19_qh7op"]
+[ext_resource type="Resource" uid="uid://bm0w0lv46tcge" path="res://src/resources/items/tools/iron/pickaxe_iron.tres" id="20_dql6g"]
+[ext_resource type="Resource" uid="uid://bh17emskl1god" path="res://src/resources/items/tools/iron/shovel_iron.tres" id="21_k0sgo"]
+[ext_resource type="Resource" uid="uid://cs6mgsqco2k3c" path="res://src/resources/items/tools/iron/sword_iron.tres" id="22_hgl71"]
+[ext_resource type="Resource" uid="uid://bpokla4mbwsv3" path="res://src/resources/items/placeables/torch.tres" id="24_yqvqx"]
+[ext_resource type="Resource" uid="uid://cby07bhs3sihn" path="res://src/resources/items/ores/coal_ore.tres" id="25_hfdxt"]
+
+[sub_resource type="Resource" id="Resource_o4ihr"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("4_i1rct"), null, null, ExtResource("4_i1rct"), null, null, null, null, null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("3_blson")])
+output_quantities = Array[int]([4])
+skill_type = 3
+experience_gain = 1
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_blson"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("5_ipexy"), null, null, null, null, null, null, null, null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("4_i1rct")])
+output_quantities = Array[int]([4])
+skill_type = 3
+experience_gain = 1
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_sk166"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("4_i1rct"), ExtResource("4_i1rct"), null, ExtResource("4_i1rct"), ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("6_norwg")])
+output_quantities = Array[int]([1])
+skill_type = 3
+experience_gain = 5
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_2sm70"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("4_i1rct"), ExtResource("4_i1rct"), ExtResource("4_i1rct"), null, ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("7_t6i4t")])
+output_quantities = Array[int]([1])
+skill_type = 3
+experience_gain = 5
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_i1rct"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([null, ExtResource("4_i1rct"), null, null, ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("8_ft138")])
+output_quantities = Array[int]([1])
+skill_type = 3
+experience_gain = 5
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_ipexy"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([null, ExtResource("4_i1rct"), null, null, ExtResource("4_i1rct"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("9_61viq")])
+output_quantities = Array[int]([1])
+skill_type = 3
+experience_gain = 5
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_chest"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("4_i1rct"), ExtResource("4_i1rct"), ExtResource("4_i1rct"), ExtResource("4_i1rct"), null, ExtResource("4_i1rct"), ExtResource("4_i1rct"), ExtResource("4_i1rct"), ExtResource("4_i1rct")])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("10_chest")])
+output_quantities = Array[int]([1])
+skill_type = 3
+experience_gain = 10
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_furnace"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("12_rn0gn"), ExtResource("12_rn0gn"), ExtResource("12_rn0gn"), ExtResource("12_rn0gn"), null, ExtResource("12_rn0gn"), ExtResource("12_rn0gn"), ExtResource("12_rn0gn"), ExtResource("12_rn0gn")])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("11_furnace")])
+output_quantities = Array[int]([1])
+skill_type = 3
+experience_gain = 15
+level_requirement = 0
+
+[sub_resource type="Resource" id="Resource_norwg"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("15_rn0gn"), null, ExtResource("15_rn0gn"), null, ExtResource("15_rn0gn"), null, null, ExtResource("15_rn0gn"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("13_i1rct")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_k6d43"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("15_rn0gn"), ExtResource("15_rn0gn"), ExtResource("15_rn0gn"), null, ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("14_64fea")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_t43ul"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("15_rn0gn"), ExtResource("15_rn0gn"), null, ExtResource("15_rn0gn"), ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("16_2ujny")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_7fbhj"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([null, ExtResource("15_rn0gn"), null, null, ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("17_yqvqx")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_fov6i"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([null, ExtResource("15_rn0gn"), null, null, ExtResource("15_rn0gn"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("18_hfdxt")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_huh8q"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("12_iron"), ExtResource("12_iron"), null, ExtResource("12_iron"), ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("19_qh7op")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_tle5w"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("12_iron"), ExtResource("12_iron"), ExtResource("12_iron"), null, ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("20_dql6g")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_3lo5r"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([null, ExtResource("12_iron"), null, null, ExtResource("3_blson"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("21_k0sgo")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_5wvrl"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([null, ExtResource("12_iron"), null, null, ExtResource("12_iron"), null, null, ExtResource("3_blson"), null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("22_hgl71")])
+output_quantities = Array[int]([1])
+
+[sub_resource type="Resource" id="Resource_qh7op"]
+script = ExtResource("1_5a3m2")
+shape = Array[ExtResource("2_o4ihr")]([ExtResource("25_hfdxt"), null, null, ExtResource("3_blson"), null, null, null, null, null])
+output_items = Array[ExtResource("2_o4ihr")]([ExtResource("24_yqvqx")])
+output_quantities = Array[int]([8])
+
+[resource]
+script = ExtResource("2_n1uyq")
+recipes = Array[ExtResource("1_5a3m2")]([SubResource("Resource_o4ihr"), SubResource("Resource_blson"), SubResource("Resource_sk166"), SubResource("Resource_2sm70"), SubResource("Resource_i1rct"), SubResource("Resource_ipexy"), SubResource("Resource_chest"), SubResource("Resource_furnace"), SubResource("Resource_norwg"), SubResource("Resource_k6d43"), SubResource("Resource_t43ul"), SubResource("Resource_7fbhj"), SubResource("Resource_fov6i"), SubResource("Resource_huh8q"), SubResource("Resource_tle5w"), SubResource("Resource_3lo5r"), SubResource("Resource_5wvrl"), SubResource("Resource_qh7op")])

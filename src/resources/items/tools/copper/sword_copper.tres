@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://b50lb1x3y6nby"]
+
+[ext_resource type="Texture2D" uid="uid://c2q0eb10lyxmu" path="res://assets/art/ui/icons/tools/copper/Sword.png" id="1_2vyuy"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_j63pk"]
+[ext_resource type="Resource" uid="uid://7jmco017ydjv" path="res://src/resources/items/tools/tiers/tool_tier_copper.tres" id="3_k7k3m"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6sef"]
+atlas = ExtResource("1_2vyuy")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_j63pk")
+icon = SubResource("AtlasTexture_d6sef")
+name = "Copper Sword"
+item_id = "sword_copper"
+max_stack_size = 1
+value = 40
+item_type = 2
+tool_type = 5
+tool_tier = ExtResource("3_k7k3m")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

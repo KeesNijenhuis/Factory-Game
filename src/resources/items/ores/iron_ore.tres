@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://qfynpiaxu182"]
+
+[ext_resource type="Texture2D" uid="uid://c2bwxyibi0vew" path="res://assets/art/world/items/Miners props.png" id="1_8tc1y"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_f27js"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7kegr"]
+atlas = ExtResource("1_8tc1y")
+region = Rect2(16, 16, 16, 16)
+
+[resource]
+script = ExtResource("1_f27js")
+icon = SubResource("AtlasTexture_7kegr")
+name = "Iron Ore"
+description = "Iron Ore"
+item_id = "ore_iron"
+value = 8
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

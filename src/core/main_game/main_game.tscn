@@ -1,0 +1,208 @@
+[gd_scene format=3 uid="uid://brp15qbvsg6ry"]
+
+[ext_resource type="Script" uid="uid://dhitkmddhtqqh" path="res://src/core/main_game/main_game.gd" id="1_3fed5"]
+[ext_resource type="PackedScene" uid="uid://xtwlgn3vxvdl" path="res://src/ui/debug/debug_text_interface.tscn" id="2_6yl8a"]
+[ext_resource type="Script" uid="uid://dve7hckdlnxkn" path="res://src/core/autoload/event_bus.gd" id="2_ibp4d"]
+[ext_resource type="Script" uid="uid://dlgyvkn8k0rj6" path="res://src/ui/hud_controller.gd" id="3_0kore"]
+[ext_resource type="PackedScene" uid="uid://ce0sk75v6qlrq" path="res://src/ui/hotbar/hotbar.tscn" id="3_tk58t"]
+[ext_resource type="PackedScene" uid="uid://beety0eo2irp4" path="res://src/ui/debug/debug_fps_text.tscn" id="5_tk58t"]
+[ext_resource type="PackedScene" uid="uid://d2nlhxj12wp7p" path="res://src/ui/inventory/inventory_panel.tscn" id="6_chest_panel"]
+[ext_resource type="PackedScene" path="res://src/ui/inventory/workbenches/crafting_bench_panel.tscn" id="7_cbench"]
+[ext_resource type="PackedScene" path="res://src/ui/skills/skills_panel.tscn" id="7_skills_panel"]
+[ext_resource type="PackedScene" uid="uid://crw4kbwxbp06c" path="res://src/ui/inventory/workbenches/furnace_panel.tscn" id="7_tc86p"]
+[ext_resource type="PackedScene" path="res://src/ui/inventory/workbenches/blast_furnace_panel.tscn" id="7_bfpanel"]
+[ext_resource type="PackedScene" uid="uid://sk6dywl3jsil" path="res://src/ui/save_load/save_load_panel.tscn" id="8_rqvdb"]
+[ext_resource type="Script" uid="uid://bjmsbtuqj8gt0" path="res://src/ui/transition/screen_transition.gd" id="9_screentrans"]
+[ext_resource type="PackedScene" path="res://src/ui/debug/debug_menu.tscn" id="10_debugmenu"]
+[ext_resource type="PackedScene" uid="uid://b5ru12aeygiks" path="res://src/ui/debug/item_spawn_menu.tscn" id="11_itemspawn"]
+
+[node name="MainGame" type="Node" unique_id=1787262438]
+script = ExtResource("1_3fed5")
+
+[node name="Systems" type="Node" parent="." unique_id=1023838794]
+script = ExtResource("2_ibp4d")
+
+[node name="World" type="Node2D" parent="." unique_id=2113725414]
+process_mode = 1
+y_sort_enabled = true
+
+[node name="LevelRoot" type="Node2D" parent="World" unique_id=1259772863]
+unique_name_in_owner = true
+y_sort_enabled = true
+
+[node name="EntityRoot" type="Node2D" parent="World" unique_id=97300777]
+unique_name_in_owner = true
+z_index = 1
+y_sort_enabled = true
+
+[node name="EffectRoot" type="Node2D" parent="World" unique_id=576777870]
+unique_name_in_owner = true
+y_sort_enabled = true
+
+[node name="HudLayer" type="CanvasLayer" parent="." unique_id=1238809725]
+layer = 3
+
+[node name="HudRoot" type="Control" parent="HudLayer" unique_id=814724646]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("3_0kore")
+
+[node name="Hotbar" parent="HudLayer/HudRoot" unique_id=1251993382 instance=ExtResource("3_tk58t")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="InventoryPanel" parent="HudLayer/HudRoot" unique_id=1533308152 instance=ExtResource("6_chest_panel")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_right = 0.0
+anchor_bottom = 0.5
+grow_horizontal = 1
+
+[node name="ChestInventoryPanel" parent="HudLayer/HudRoot" unique_id=1838245193 instance=ExtResource("6_chest_panel")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_right = 0.0
+anchor_bottom = 0.5
+offset_left = 150.0
+offset_right = 150.0
+grow_horizontal = 1
+mouse_filter = 2
+rows = 3
+toggle_with_inventory_key = false
+container_name = "Chest"
+
+[node name="SkillsPanel" parent="HudLayer/HudRoot" unique_id=1073741900 instance=ExtResource("7_skills_panel")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="FurnacePanel" parent="HudLayer/HudRoot" unique_id=1214770463 instance=ExtResource("7_tc86p")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_right = 0.0
+anchor_bottom = 0.5
+grow_horizontal = 1
+mouse_filter = 2
+toggle_with_inventory_key = false
+
+[node name="BlastFurnacePanel" parent="HudLayer/HudRoot" unique_id=2200000101 instance=ExtResource("7_bfpanel")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_right = 0.0
+anchor_bottom = 0.5
+grow_horizontal = 1
+mouse_filter = 2
+toggle_with_inventory_key = false
+
+[node name="CraftingBenchPanel" parent="HudLayer/HudRoot" unique_id=656909386 instance=ExtResource("7_cbench")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_right = 0.0
+anchor_bottom = 0.5
+grow_horizontal = 1
+mouse_filter = 2
+toggle_with_inventory_key = false
+
+[node name="PauseLayer" type="CanvasLayer" parent="." unique_id=1119114157]
+process_mode = 2
+layer = 20
+
+[node name="PauseRoot" type="Control" parent="PauseLayer" unique_id=1172035149]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SaveLoadPanel" parent="PauseLayer/PauseRoot" unique_id=1074855564 instance=ExtResource("8_rqvdb")]
+visible = false
+layout_mode = 1
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TransitionLayer" type="CanvasLayer" parent="." unique_id=710058158]
+process_mode = 3
+layer = 100
+
+[node name="TransitionRoot" type="Control" parent="TransitionLayer" unique_id=958993905]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("9_screentrans")
+
+[node name="Overlay" type="ColorRect" parent="TransitionLayer/TransitionRoot" unique_id=384710295]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0)
+
+[node name="DebugLayer" type="CanvasLayer" parent="." unique_id=62101544]
+layer = 128
+
+[node name="DebugRoot" type="Control" parent="DebugLayer" unique_id=1261050444]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DebugTextInterface" parent="DebugLayer/DebugRoot" unique_id=434032383 instance=ExtResource("2_6yl8a")]
+visible = false
+layout_mode = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="DebugFPSText" parent="DebugLayer/DebugRoot" unique_id=1672623461 instance=ExtResource("5_tk58t")]
+visible = false
+layout_mode = 1
+
+[node name="DebugMenu" parent="DebugLayer/DebugRoot" unique_id=955950780 instance=ExtResource("10_debugmenu")]
+layout_mode = 1
+
+[node name="ItemSpawnMenu" parent="DebugLayer/DebugRoot" unique_id=1907308588 instance=ExtResource("11_itemspawn")]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 0.0
+offset_top = -220.0
+offset_right = 240.0
+offset_bottom = 220.0
+grow_vertical = 2

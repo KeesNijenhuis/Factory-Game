@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OreType" format=3]
+
+[ext_resource type="Script" path="res://src/resources/ore_types/ore_type.gd" id="1_ct0pp"]
+[ext_resource type="Resource" uid="uid://dqafevngbqx40" path="res://src/resources/items/ores/copper_ore.tres" id="2_cprit"]
+
+[resource]
+script = ExtResource("1_ct0pp")
+ore_name = "Copper"
+dropped_item = ExtResource("2_cprit")
+column_offset = 0
+fallback_source_id = 6
+fallback_variants = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0)])
+metadata/_custom_type_script = "res://src/resources/ore_types/ore_type.gd"

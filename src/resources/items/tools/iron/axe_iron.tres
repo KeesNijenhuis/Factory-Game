@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://dvvehaeivvxfy"]
+
+[ext_resource type="Texture2D" uid="uid://dmcq4jn1su2vn" path="res://assets/art/ui/icons/tools/iron/Axe.png" id="1_wkqq0"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_kolte"]
+[ext_resource type="Resource" uid="uid://gi3hx01fco0s" path="res://src/resources/items/tools/tiers/tool_tier_iron.tres" id="3_8gcmt"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6sef"]
+atlas = ExtResource("1_wkqq0")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_kolte")
+icon = SubResource("AtlasTexture_d6sef")
+name = "Iron Axe"
+item_id = "axe_iron"
+max_stack_size = 1
+value = 100
+item_type = 2
+tool_type = 2
+tool_tier = ExtResource("3_8gcmt")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

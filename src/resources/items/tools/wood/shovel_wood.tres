@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://cl6a7pyjihr82"]
+
+[ext_resource type="Texture2D" uid="uid://80w4gs8y5526" path="res://assets/art/ui/icons/tools/wood/Shovel.png" id="1_q03so"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_lo5k0"]
+[ext_resource type="Resource" uid="uid://dcbyw6jkxand8" path="res://src/resources/items/tools/tiers/tool_tier_wood.tres" id="3_54icq"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0fsqf"]
+atlas = ExtResource("1_q03so")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_lo5k0")
+icon = SubResource("AtlasTexture_0fsqf")
+name = "Wooden Shovel"
+description = "Made of.... Wood?"
+item_id = "shovel_wood"
+max_stack_size = 1
+item_type = 2
+tool_type = 3
+tool_tier = ExtResource("3_54icq")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

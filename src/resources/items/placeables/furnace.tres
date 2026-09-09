@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://1b7wlbipjp3s"]
+
+[ext_resource type="Texture2D" uid="uid://u485brmn6j5k" path="res://assets/art/world/objects/Furnace.png" id="1_furnace_tex"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_item"]
+[ext_resource type="PackedScene" uid="uid://fte5maapa3kw" path="res://src/gameplay/inventory/furnace.tscn" id="3_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_furnace_icon"]
+atlas = ExtResource("1_furnace_tex")
+region = Rect2(0, 0, 32, 32)
+
+[resource]
+script = ExtResource("2_item")
+icon = SubResource("AtlasTexture_furnace_icon")
+name = "Furnace"
+description = "A stone furnace for smelting ore into ingots. Place it to use it."
+item_id = "furnace"
+max_stack_size = 10
+value = 15
+placed_scene = ExtResource("3_scene")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

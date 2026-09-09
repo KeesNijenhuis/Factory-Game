@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://yby1vno08j43"]
+
+[ext_resource type="Texture2D" uid="uid://c8g5ucqstyr3j" path="res://assets/art/world/objects/test_conveyor_belt.png" id="1_belt_tex"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_item"]
+[ext_resource type="PackedScene" uid="uid://c32xfq3767ydw" path="res://src/gameplay/belts/transport_belt.tscn" id="3_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_belt_icon"]
+atlas = ExtResource("1_belt_tex")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_item")
+icon = SubResource("AtlasTexture_belt_icon")
+name = "Transport Belt"
+description = "Carries items along a line. Press R before placing to choose direction -- placing next to an existing belt continues its line automatically."
+item_id = "transport_belt"
+max_stack_size = 50
+value = 5
+placed_scene = ExtResource("3_scene")

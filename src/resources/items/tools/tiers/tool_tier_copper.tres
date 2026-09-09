@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ToolTierType" format=3 uid="uid://7jmco017ydjv"]
+
+[ext_resource type="Script" uid="uid://cdkkoaqmjfc23" path="res://src/resources/items/tools/tiers/tool_tier_type.gd" id="1_na1t3"]
+
+[resource]
+script = ExtResource("1_na1t3")
+durability = 300
+required_level = 2
+metadata/_custom_type_script = "uid://cdkkoaqmjfc23"

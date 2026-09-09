@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://bm0w0lv46tcge"]
+
+[ext_resource type="Texture2D" uid="uid://cq1gbqoa64vj1" path="res://assets/art/ui/icons/tools/iron/Pickaxe.png" id="1_rb6sf"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_dvuum"]
+[ext_resource type="Resource" uid="uid://gi3hx01fco0s" path="res://src/resources/items/tools/tiers/tool_tier_iron.tres" id="3_p2ut8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6sef"]
+atlas = ExtResource("1_rb6sf")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_dvuum")
+icon = SubResource("AtlasTexture_d6sef")
+name = "Iron Pickaxe"
+item_id = "pickaxe_iron"
+max_stack_size = 1
+value = 100
+item_type = 2
+tool_type = 1
+tool_tier = ExtResource("3_p2ut8")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://dpfvfi8s4vbru"]
+
+[ext_resource type="Texture2D" uid="uid://c34mvwf4u2qke" path="res://assets/art/ui/icons/tools/copper/Shovel.png" id="1_jvbsn"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_cb670"]
+[ext_resource type="Resource" uid="uid://7jmco017ydjv" path="res://src/resources/items/tools/tiers/tool_tier_copper.tres" id="3_51rjb"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mvwmf"]
+atlas = ExtResource("1_jvbsn")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_cb670")
+icon = SubResource("AtlasTexture_mvwmf")
+name = "Copper Shovel"
+item_id = "shovel_copper"
+max_stack_size = 1
+value = 40
+item_type = 2
+tool_type = 3
+tool_tier = ExtResource("3_51rjb")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

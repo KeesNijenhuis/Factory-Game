@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://btfc5tcc8fp8l"]
+
+[ext_resource type="Shader" uid="uid://gsycmadc2fy7" path="res://src/shaders/ore_shake.gdshader" id="1_jp5h8"]
+[ext_resource type="Texture2D" uid="uid://5vjw63rnjesq" path="res://assets/art/world/objects/Tree.png" id="2_66e0c"]
+[ext_resource type="Script" uid="uid://qp6tcj86o3oa" path="res://src/levels/level_objects/object_resource.gd" id="3_exsyo"]
+[ext_resource type="Resource" uid="uid://c3tkvw32xnwtu" path="res://src/resources/items/materials/oak_log.tres" id="4_66e0c"]
+[ext_resource type="PackedScene" uid="uid://b2diwwvs6lng4" path="res://src/levels/level_objects/components/hit_box.tscn" id="5_jdabk"]
+[ext_resource type="PackedScene" uid="uid://do0w82j8aq80q" path="res://src/levels/level_objects/components/durability_component.tscn" id="6_f0b6g"]
+[ext_resource type="PackedScene" path="res://src/levels/level_objects/components/experience_component.tscn" id="7_expc"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_r5cho"]
+resource_local_to_scene = true
+shader = ExtResource("1_jp5h8")
+shader_parameter/shake_intensity = 0.0
+shader_parameter/shake_speed = 20.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jsgwr"]
+atlas = ExtResource("2_66e0c")
+region = Rect2(0, 0, 32, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_y3nbj"]
+atlas = ExtResource("2_66e0c")
+region = Rect2(0, 40, 32, 8)
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_d6sef"]
+radius = 3.0
+height = 8.0
+
+[node name="OakTree" type="Sprite2D" unique_id=1205881654 node_paths=PackedStringArray("empty_node")]
+z_index = 1
+material = SubResource("ShaderMaterial_r5cho")
+texture = SubResource("AtlasTexture_jsgwr")
+offset = Vector2(0, -16)
+script = ExtResource("3_exsyo")
+dropped_item_data = ExtResource("4_66e0c")
+empty_node = NodePath("EmptyNode")
+respawn_time = 10.0
+
+[node name="EmptyNode" type="Sprite2D" parent="." unique_id=1441643394]
+visible = false
+position = Vector2(0, -16)
+texture = SubResource("AtlasTexture_y3nbj")
+offset = Vector2(0, 20)
+
+[node name="HitBox" parent="." unique_id=1453454015 instance=ExtResource("5_jdabk")]
+tool_type = 2
+
+[node name="DurabilityComponent" parent="." unique_id=370327569 instance=ExtResource("6_f0b6g")]
+position = Vector2(0, -16)
+
+[node name="ExperienceComponent" parent="." instance=ExtResource("7_expc")]
+skill_type = 2
+experience_amount = 6
+
+[node name="Area2D" type="StaticBody2D" parent="." unique_id=1995797631]
+position = Vector2(0, -16)
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=387467874]
+position = Vector2(0, 16)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_d6sef")

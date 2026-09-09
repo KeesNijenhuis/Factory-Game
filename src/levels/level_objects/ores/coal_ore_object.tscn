@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://i8t3rmwm1i2a"]
+
+[ext_resource type="PackedScene" uid="uid://b6e6iwdtom83v" path="res://src/levels/level_objects/ores/ore_node.tscn" id="1_lflh0"]
+[ext_resource type="Shader" uid="uid://gsycmadc2fy7" path="res://src/shaders/ore_shake.gdshader" id="2_aklk0"]
+[ext_resource type="Texture2D" uid="uid://1beid8fst3mt" path="res://assets/art/world/objects/stone with minerals2.png" id="3_0qyg6"]
+[ext_resource type="Resource" uid="uid://dqafevngbqx40" path="res://src/resources/items/ores/copper_ore.tres" id="4_ih25w"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lflh0"]
+resource_local_to_scene = true
+shader = ExtResource("2_aklk0")
+shader_parameter/flash_amount = 0.0
+shader_parameter/shake_intensity = 0.0
+shader_parameter/shake_speed = 20.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iron"]
+atlas = ExtResource("3_0qyg6")
+region = Rect2(128, 64, 32, 16)
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lflh0"]
+radius = 3.0
+height = 22.0
+
+[node name="CoalOreObject" unique_id=1910034368 instance=ExtResource("1_lflh0")]
+material = SubResource("ShaderMaterial_lflh0")
+texture = SubResource("AtlasTexture_iron")
+dropped_item_data = ExtResource("4_ih25w")
+
+[node name="CollisionShape2D" parent="Area2D" parent_id_path=PackedInt32Array(907162808) index="0" unique_id=1626368091]
+shape = SubResource("CapsuleShape2D_lflh0")
+
+[node name="DurabilityComponent" parent="." index="3" unique_id=1501886967]
+durability = 2
+
+[node name="ExperienceComponent" parent="." index="4" unique_id=1214602757]
+experience_amount = 3

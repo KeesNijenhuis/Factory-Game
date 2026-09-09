@@ -1,0 +1,176 @@
+[gd_scene format=3 uid="uid://csxavp14usnqf"]
+
+[ext_resource type="Script" uid="uid://bt48jpk0fjrnk" path="res://src/gameplay/inventory/blast_furnace.gd" id="1_bfscr"]
+[ext_resource type="Script" uid="uid://cr74po4u1fl1j" path="res://src/ui/inventory/blast_furnace_inventory.gd" id="3_inventory"]
+[ext_resource type="Texture2D" uid="uid://myehij04juys" path="res://assets/art/world/objects/Blast_Furnace.png" id="4_3ad6w"]
+[ext_resource type="Texture2D" uid="uid://bqv6odfwn5e62" path="res://assets/art/world/point_light_texture.png" id="4_d0a2t"]
+[ext_resource type="Script" uid="uid://dw11g21si4br4" path="res://src/levels/level_objects/components/item_input_slot_component.gd" id="5_522hu"]
+[ext_resource type="Script" uid="uid://3opnlx12cauq" path="res://src/levels/level_objects/components/solid_fuel_input_slot_component.gd" id="5_sfisc"]
+[ext_resource type="Script" uid="uid://8qmhgqcrq5ej" path="res://src/levels/level_objects/components/item_output_slot_component.gd" id="6_61i8g"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_right.tres" id="6_drvn8"]
+[ext_resource type="Script" uid="uid://d3xw3u81c32bl" path="res://src/levels/level_objects/components/slot_locations_component.gd" id="7_n6eyt"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_down.tres" id="7_v5hru"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_up.tres" id="8_m6j2w"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_left.tres" id="10_2y16m"]
+[ext_resource type="PackedScene" uid="uid://jsvcsftw3jax" path="res://src/levels/level_objects/components/destructible_component.tscn" id="12_2y16m"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bf"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_3ad6w")
+}],
+"loop": 1,
+"name": &"burning",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_3ad6w")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 1.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bf_interact"]
+size = Vector2(34, 27.25)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bf_player"]
+size = Vector2(33, 19)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bf_click"]
+size = Vector2(34, 35)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xk8nj"]
+size = Vector2(34, 35)
+
+[node name="BlastFurnace" type="Area2D" unique_id=-2094967295]
+z_index = 1
+collision_layer = 2
+collision_mask = 16
+script = ExtResource("1_bfscr")
+interaction_range = 34.0
+grid_size = Vector2i(2, 2)
+
+[node name="Inventory" type="Node" parent="." unique_id=-2094967294]
+script = ExtResource("3_inventory")
+rows = 1
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=-2094967293]
+position = Vector2(9, -6)
+sprite_frames = SubResource("SpriteFrames_bf")
+animation = &"burning"
+
+[node name="InteractionCollisionShape" type="CollisionShape2D" parent="." unique_id=-2094967292]
+visible = false
+position = Vector2(9, 10.625)
+shape = SubResource("RectangleShape2D_bf_interact")
+
+[node name="PlayerCollisionBody" type="StaticBody2D" parent="." unique_id=-2094967291]
+collision_mask = 2
+
+[node name="PlayerCollisionShape" type="CollisionShape2D" parent="PlayerCollisionBody" unique_id=-2094967290]
+visible = false
+position = Vector2(9, 9.5)
+shape = SubResource("RectangleShape2D_bf_player")
+debug_color = Color(0.8855444, 0.28859735, 0.43200466, 0.41960785)
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=-2094967289]
+visible = false
+position = Vector2(8, 8)
+energy = 0.5
+texture = ExtResource("4_d0a2t")
+
+[node name="InputASlot" type="Node2D" parent="." unique_id=-2094967288]
+script = ExtResource("5_522hu")
+facing = "left"
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 0
+
+[node name="InputBSlot" type="Node2D" parent="." unique_id=-2094967287]
+position = Vector2(16, 0)
+script = ExtResource("5_522hu")
+facing = "up"
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 1
+
+[node name="SolidFuelInputSlot" type="Node2D" parent="." unique_id=-2094967286]
+position = Vector2(0, 16)
+script = ExtResource("5_sfisc")
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 2
+
+[node name="OutputSlot" type="Node2D" parent="." unique_id=-2094967285]
+position = Vector2(16, 16)
+script = ExtResource("6_61i8g")
+facing = "right"
+linked_inventory_path = NodePath("../Inventory")
+linked_slot_index = 3
+
+[node name="SlotLocationsComponent" type="Node2D" parent="." unique_id=-2094967284]
+script = ExtResource("7_n6eyt")
+
+[node name="ClickArea" type="Area2D" parent="SlotLocationsComponent" unique_id=-2094967283]
+position = Vector2(8, 8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SlotLocationsComponent/ClickArea" unique_id=-2094967282]
+visible = false
+z_index = 4
+position = Vector2(1, -1.5)
+shape = SubResource("RectangleShape2D_bf_click")
+
+[node name="UpRight" type="Sprite2D" parent="SlotLocationsComponent" unique_id=-2094967281]
+position = Vector2(18, -7)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("8_m6j2w")
+
+[node name="UpLeft" type="Sprite2D" parent="SlotLocationsComponent" unique_id=2067707929]
+position = Vector2(-2, -7)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("8_m6j2w")
+
+[node name="DownRight" type="Sprite2D" parent="SlotLocationsComponent" unique_id=-2094967280]
+position = Vector2(18, 22)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("7_v5hru")
+
+[node name="DownLeft" type="Sprite2D" parent="SlotLocationsComponent" unique_id=2135741679]
+position = Vector2(-2, 22)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("7_v5hru")
+
+[node name="LeftDown" type="Sprite2D" parent="SlotLocationsComponent" unique_id=-2094967279]
+position = Vector2(-6, 15)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("10_2y16m")
+
+[node name="LeftUp" type="Sprite2D" parent="SlotLocationsComponent" unique_id=1012037183]
+position = Vector2(-6, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("10_2y16m")
+
+[node name="RightDown" type="Sprite2D" parent="SlotLocationsComponent" unique_id=-2094967278]
+position = Vector2(24, 15)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("6_drvn8")
+
+[node name="RightUp" type="Sprite2D" parent="SlotLocationsComponent" unique_id=604888941]
+position = Vector2(24, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("6_drvn8")
+
+[node name="DestructibleComponent" parent="." unique_id=-2094967277 instance=ExtResource("12_2y16m")]
+position = Vector2(6, 16)
+dropped_item_id = "blast_furnace"
+
+[node name="HitBoxShape" parent="DestructibleComponent/HitBox" parent_id_path=PackedInt32Array(-2094967277, 539492466) index="0" unique_id=1094773568]
+visible = false
+position = Vector2(3, -9.5)
+shape = SubResource("RectangleShape2D_xk8nj")
+
+[node name="DurabilityComponent" parent="DestructibleComponent" index="1" unique_id=866315890]
+durability = 2
+
+[editable path="DestructibleComponent"]
+[editable path="DestructibleComponent/HitBox"]

@@ -1,0 +1,139 @@
+[gd_scene format=3 uid="uid://ce0sk75v6qlrq"]
+
+[ext_resource type="Texture2D" uid="uid://ckslsjdnwdlr3" path="res://assets/art/ui/Slots.png" id="1_lvm27"]
+[ext_resource type="Script" path="res://src/ui/hotbar/hotbar.gd" id="2_hotbar"]
+[ext_resource type="Script" uid="uid://bx8538xtlawqx" path="res://src/ui/inventory/inventory.gd" id="3_inventory"]
+[ext_resource type="PackedScene" path="res://src/ui/hotbar/hotbar_slot.tscn" id="4_hotbar_slot"]
+[ext_resource type="Texture2D" uid="uid://djryrlixkbc2r" path="res://assets/art/ui/inventory.png" id="5_inventory_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6sef"]
+atlas = ExtResource("1_lvm27")
+region = Rect2(6, 105, 164, 28)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_itemname"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+texture = ExtResource("5_inventory_tex")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+region_rect = Rect2(0, 64, 48, 48)
+
+[sub_resource type="LabelSettings" id="LabelSettings_itemname"]
+font_size = 10
+font_color = Color(0.31431612, 0.31431612, 0.3143161, 1)
+
+[node name="Hotbar" type="Control" unique_id=1251993382]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_hotbar")
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("3_inventory")
+rows = 1
+columns = 8
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1251919087]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -82.0
+offset_top = -40.0
+offset_right = 82.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer" unique_id=1395808072]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_d6sef")
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/TextureRect" unique_id=343175794]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 7
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/TextureRect/MarginContainer" unique_id=269420542]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="Slot01" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot02" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot03" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot04" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot05" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot06" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot07" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Slot08" parent="MarginContainer/TextureRect/MarginContainer/HBoxContainer" instance=ExtResource("4_hotbar_slot")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="ItemNameLabel" type="PanelContainer" parent="."]
+visible = false
+z_index = 20
+layout_mode = 1
+offset_right = 77.0
+offset_bottom = 23.0
+theme_override_styles/panel = SubResource("StyleBoxTexture_itemname")
+
+[node name="MarginContainer" type="MarginContainer" parent="ItemNameLabel"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 1
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="Label" type="Label" parent="ItemNameLabel/MarginContainer"]
+layout_mode = 2
+text = "Item Name"
+label_settings = SubResource("LabelSettings_itemname")
+horizontal_alignment = 1
+vertical_alignment = 1

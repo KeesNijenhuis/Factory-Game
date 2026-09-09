@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://do0w82j8aq80q"]
+
+[ext_resource type="Script" uid="uid://8c7klqpi1gkt" path="res://src/levels/level_objects/components/durability_component.gd" id="1_uu17y"]
+
+[node name="DurabilityComponent" type="Node2D" unique_id=370327569]
+script = ExtResource("1_uu17y")

@@ -1,0 +1,120 @@
+[gd_scene format=3 uid="uid://bywi83ogsamij"]
+
+[ext_resource type="Script" uid="uid://cj71ikd4qvim8" path="res://src/gameplay/inventory/chest.gd" id="1_jfva0"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_right.tres" id="5_gx67s"]
+[ext_resource type="Script" uid="uid://d3xw3u81c32bl" path="res://src/levels/level_objects/components/slot_locations_component.gd" id="6_uu6y6"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_up.tres" id="7_1njaj"]
+[ext_resource type="Script" uid="uid://bx8538xtlawqx" path="res://src/ui/inventory/inventory.gd" id="8_hipxx"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_down.tres" id="8_p4r3a"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrows/arrow_left.tres" id="9_3tdaa"]
+[ext_resource type="Texture2D" uid="uid://cvm5rlyodrqg8" path="res://assets/art/world/objects/chest.png" id="9_hfwbe"]
+[ext_resource type="Script" uid="uid://dw11g21si4br4" path="res://src/levels/level_objects/components/item_input_slot_component.gd" id="10_1njaj"]
+[ext_resource type="Script" uid="uid://8qmhgqcrq5ej" path="res://src/levels/level_objects/components/item_output_slot_component.gd" id="11_p4r3a"]
+[ext_resource type="PackedScene" uid="uid://jsvcsftw3jax" path="res://src/levels/level_objects/components/destructible_component.tscn" id="12_dstrc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jfva0"]
+atlas = ExtResource("9_hfwbe")
+region = Rect2(224, 0, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uu6y6"]
+atlas = ExtResource("9_hfwbe")
+region = Rect2(224, 16, 32, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_chest"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jfva0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uu6y6")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 1.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_chest"]
+radius = 6.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_chest"]
+size = Vector2(12.5, 4.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_uu6y6"]
+size = Vector2(15, 13)
+
+[node name="WoodenChest" type="Area2D" unique_id=609056568]
+z_index = 1
+collision_layer = 2
+collision_mask = 16
+script = ExtResource("1_jfva0")
+
+[node name="Inventory" type="Node" parent="." unique_id=1623361980]
+script = ExtResource("8_hipxx")
+rows = 3
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1028872318]
+position = Vector2(0, 5)
+sprite_frames = SubResource("SpriteFrames_chest")
+offset = Vector2(0.5, -6)
+
+[node name="InteractionCollisionShape" type="CollisionShape2D" parent="." unique_id=1738281735]
+visible = false
+shape = SubResource("CircleShape2D_chest")
+
+[node name="PlayerCollisionBody" type="StaticBody2D" parent="." unique_id=2062932351]
+collision_mask = 2
+
+[node name="PlayerCollisionShape" type="CollisionShape2D" parent="PlayerCollisionBody" unique_id=2062932352]
+visible = false
+position = Vector2(0, 2)
+shape = SubResource("RectangleShape2D_chest")
+debug_color = Color(0.8855444, 0.28859735, 0.43200466, 0.41960785)
+
+[node name="InputSlot" type="Node2D" parent="." unique_id=394352241]
+script = ExtResource("10_1njaj")
+facing = "left"
+linked_inventory_path = NodePath("../Inventory")
+
+[node name="OutputSlot" type="Node2D" parent="." unique_id=1417748658]
+script = ExtResource("11_p4r3a")
+facing = "right"
+linked_inventory_path = NodePath("../Inventory")
+
+[node name="SlotLocationsComponent" type="Node2D" parent="." unique_id=766011198]
+visible = false
+script = ExtResource("6_uu6y6")
+
+[node name="Up" type="Sprite2D" parent="SlotLocationsComponent" unique_id=135281790]
+position = Vector2(0, -5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("7_1njaj")
+
+[node name="Down" type="Sprite2D" parent="SlotLocationsComponent" unique_id=880639057]
+position = Vector2(0, 5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("8_p4r3a")
+
+[node name="Left" type="Sprite2D" parent="SlotLocationsComponent" unique_id=435144638]
+position = Vector2(-5, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("9_3tdaa")
+
+[node name="Right" type="Sprite2D" parent="SlotLocationsComponent" unique_id=1667300774]
+position = Vector2(5, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("5_gx67s")
+
+[node name="ClickArea" type="Area2D" parent="SlotLocationsComponent" unique_id=1707482252]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SlotLocationsComponent/ClickArea" unique_id=1386488070]
+z_index = 2
+position = Vector2(0, 0.5)
+shape = SubResource("RectangleShape2D_uu6y6")
+debug_color = Color(0.69091254, 0.4464882, 0.59182185, 0.41960785)
+
+[node name="DestructibleComponent" parent="." unique_id=81079809 instance=ExtResource("12_dstrc")]
+visible = false
+position = Vector2(0, -1)
+required_tool_type = 2
+dropped_item_id = "chest"

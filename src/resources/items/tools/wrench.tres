@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://7ab1rv6ap4qb"]
+
+[ext_resource type="Texture2D" uid="uid://bk4gxkgeg5q63" path="res://assets/art/world/items/Wrench.png" id="1_m1ops"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_wrnch"]
+[ext_resource type="Resource" uid="uid://dcbyw6jkxand8" path="res://src/resources/items/tools/tiers/tool_tier_wood.tres" id="3_wrnch"]
+
+[resource]
+script = ExtResource("2_wrnch")
+icon = ExtResource("1_m1ops")
+name = "Wrench"
+description = "Click a machine's edge to configure which side items flow in or out of. (placeholder art)"
+item_id = "wrench"
+max_stack_size = 1
+item_type = 2
+tool_type = 6
+tool_tier = ExtResource("3_wrnch")
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

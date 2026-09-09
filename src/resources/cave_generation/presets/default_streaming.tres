@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="CaveWorldStreamingConfig" format=3 uid="uid://bibwl3emg52ji"]
+
+[ext_resource type="Script" uid="uid://jjhvo34dadwq" path="res://src/resources/cave_generation/cave_world_streaming_config.gd" id="1_cfg"]
+[ext_resource type="Resource" uid="uid://cwsrqj4hlkm0k" path="res://src/resources/cave_generation/presets/chunk_cave.tres" id="2_chunk"]
+
+[resource]
+script = ExtResource("1_cfg")
+chunk_config = ExtResource("2_chunk")

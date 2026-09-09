@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://d15hdyqcq7lmt"]
+
+[ext_resource type="Texture2D" uid="uid://ck4mbg1svc7b6" path="res://assets/art/world/items/Bars and ores.png" id="1_0xx3r"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_tc1g0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_06cq6"]
+atlas = ExtResource("1_0xx3r")
+region = Rect2(32, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_tc1g0")
+icon = SubResource("AtlasTexture_06cq6")
+name = "Iron Ingot"
+description = "A chunk of ccopper ore"
+item_id = "ingot_iron"
+value = 10
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"

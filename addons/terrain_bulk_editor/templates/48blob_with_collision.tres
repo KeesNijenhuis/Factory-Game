@@ -1,0 +1,729 @@
+[gd_resource type="Resource" script_class="TerrainTemplate" format=3 uid="uid://dldjqt4qs5402"]
+
+[ext_resource type="Script" uid="uid://cxpktxofbqfdj" path="res://addons/terrain_bulk_editor/terrain_template.gd" id="1_tfic0"]
+
+[resource]
+script = ExtResource("1_tfic0")
+template_name = "48blob_with_collision"
+size = Vector2i(12, 4)
+cells = Array[Dictionary]([{
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: true,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: true,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: true,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: true,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: true,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: false,
+8: false,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -4.8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: false,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: false,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: false,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: true,
+8: true,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: true,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: true,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: false,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: true,
+8: true,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: false,
+0: false,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": false,
+"physics_layer": 0,
+"polygon": PackedVector2Array()
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: true,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: false,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: true,
+11: true,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: true,
+8: true,
+11: true,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: false,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: true,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: true,
+8: true,
+11: true,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: true,
+7: true,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: false,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -2.6666665, 8, -2.6666665, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: true,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: true,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: true,
+4: true,
+7: false,
+8: true,
+11: false,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: false,
+11: false,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: false,
+7: false,
+8: true,
+11: true,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: true,
+3: false,
+4: true,
+7: false,
+8: true,
+11: true,
+12: true,
+15: true
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}, {
+"bits": {
+-2: true,
+0: false,
+3: false,
+4: false,
+7: false,
+8: true,
+11: true,
+12: true,
+15: false
+},
+"has_collision": true,
+"physics_layer": 0,
+"polygon": PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+}])

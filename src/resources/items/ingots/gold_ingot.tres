@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://bodptfih3m2o4"]
+
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_eoc48"]
+[ext_resource type="Texture2D" uid="uid://ck4mbg1svc7b6" path="res://assets/art/world/items/Bars and ores.png" id="1_sh8lh"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ri8f2"]
+atlas = ExtResource("1_sh8lh")
+region = Rect2(0, 16, 16, 16)
+
+[resource]
+script = ExtResource("1_eoc48")
+icon = SubResource("AtlasTexture_ri8f2")
+name = "Gold Ingot"
+item_id = "ingot_gold"
+value = 60

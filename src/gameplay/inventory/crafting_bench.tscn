@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://gq81eiwusr0c"]
+
+[ext_resource type="Script" uid="uid://b8i31bjr2w2cv" path="res://src/gameplay/inventory/crafting_bench.gd" id="1_e8egi"]
+[ext_resource type="Script" uid="uid://d11ls84nihc2y" path="res://src/ui/inventory/crafting_bench_inventory.gd" id="2_3odvt"]
+[ext_resource type="Texture2D" uid="uid://c4de1dht3g8jl" path="res://assets/art/world/objects/cave/Workbench.png" id="3_nnpqn"]
+[ext_resource type="PackedScene" uid="uid://jsvcsftw3jax" path="res://src/levels/level_objects/components/destructible_component.tscn" id="4_tq3pd"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bench"]
+radius = 10.049875
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bench"]
+size = Vector2(14, 7.3125)
+
+[node name="CraftingBench" type="Area2D" unique_id=1487885864]
+z_index = 1
+collision_layer = 2
+collision_mask = 16
+script = ExtResource("1_e8egi")
+
+[node name="Inventory" type="Node" parent="." unique_id=1019994179]
+script = ExtResource("2_3odvt")
+
+[node name="AnimatedSprite2D" type="Sprite2D" parent="." unique_id=1393327483]
+texture = ExtResource("3_nnpqn")
+
+[node name="InteractionCollisionShape" type="CollisionShape2D" parent="." unique_id=1095669857]
+visible = false
+shape = SubResource("CircleShape2D_bench")
+
+[node name="PlayerCollisionBody" type="StaticBody2D" parent="." unique_id=1072392982]
+collision_mask = 2
+
+[node name="PlayerCollisionShape" type="CollisionShape2D" parent="PlayerCollisionBody" unique_id=734672810]
+visible = false
+shape = SubResource("RectangleShape2D_bench")
+debug_color = Color(0.8855444, 0.28859735, 0.43200466, 0.41960785)
+
+[node name="DestructibleComponent" parent="." unique_id=1681252195 instance=ExtResource("4_tq3pd")]
+position = Vector2(0, -2)
+required_tool_type = 2
+dropped_item_id = "crafting_bench"

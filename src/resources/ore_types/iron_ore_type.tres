@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OreType" format=3]
+
+[ext_resource type="Script" path="res://src/resources/ore_types/ore_type.gd" id="1_ir0pp"]
+[ext_resource type="Resource" uid="uid://qfynpiaxu182" path="res://src/resources/items/ores/iron_ore.tres" id="2_irnit"]
+
+[resource]
+script = ExtResource("1_ir0pp")
+ore_name = "Iron"
+dropped_item = ExtResource("2_irnit")
+column_offset = 12
+fallback_source_id = 6
+fallback_variants = Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1)])
+metadata/_custom_type_script = "res://src/resources/ore_types/ore_type.gd"

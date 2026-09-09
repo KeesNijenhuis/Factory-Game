@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://bcb1tv26ck3qg"]
+
+[ext_resource type="Texture2D" uid="uid://8km30mxn72py" path="res://assets/art/world/objects/torch.png" id="1_tbq67"]
+[ext_resource type="PackedScene" uid="uid://c3xqe1jr0h1ye" path="res://src/levels/level_objects/components/hit_flash_component.tscn" id="3_dcq3i"]
+[ext_resource type="PackedScene" uid="uid://jsvcsftw3jax" path="res://src/levels/level_objects/components/destructible_component.tscn" id="3_uxmus"]
+[ext_resource type="Texture2D" uid="uid://bqv6odfwn5e62" path="res://assets/art/world/point_light_texture.png" id="4_tbq67"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_isytx"]
+atlas = ExtResource("1_tbq67")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_vnxvi"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_isytx")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_s3nkb"]
+size = Vector2(6.5, 13.25)
+
+[node name="Torch" type="Node2D" unique_id=451475131]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=330941896]
+position = Vector2(0.5, -4)
+sprite_frames = SubResource("SpriteFrames_vnxvi")
+
+[node name="HitFlashComponent" parent="." unique_id=1502258318 instance=ExtResource("3_dcq3i")]
+
+[node name="DestructibleComponent" parent="." unique_id=1681252195 instance=ExtResource("3_uxmus")]
+position = Vector2(0, -2)
+required_tool_type = 2
+hits_to_break = 1
+dropped_item_id = "torch"
+
+[node name="HitBox" parent="DestructibleComponent" index="0" unique_id=539492466]
+tool_type = 2
+
+[node name="HitBoxShape" parent="DestructibleComponent/HitBox" index="0" unique_id=1094773568]
+position = Vector2(0, -1.625)
+shape = SubResource("RectangleShape2D_s3nkb")
+
+[node name="DurabilityComponent" parent="DestructibleComponent" index="1" unique_id=866315890]
+durability = 1
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=947004683]
+energy = 0.45
+texture = ExtResource("4_tbq67")
+texture_scale = 0.7
+
+[editable path="DestructibleComponent"]
+[editable path="DestructibleComponent/HitBox"]

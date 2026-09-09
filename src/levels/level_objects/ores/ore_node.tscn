@@ -1,0 +1,58 @@
+[gd_scene format=3 uid="uid://b6e6iwdtom83v"]
+
+[ext_resource type="Texture2D" uid="uid://1beid8fst3mt" path="res://assets/art/world/objects/stone with minerals2.png" id="1_ore"]
+[ext_resource type="Shader" uid="uid://gsycmadc2fy7" path="res://src/shaders/ore_shake.gdshader" id="2_ore"]
+[ext_resource type="Script" uid="uid://qp6tcj86o3oa" path="res://src/levels/level_objects/object_resource.gd" id="3_ore"]
+[ext_resource type="PackedScene" uid="uid://b2diwwvs6lng4" path="res://src/levels/level_objects/components/hit_box.tscn" id="4_ore"]
+[ext_resource type="PackedScene" uid="uid://do0w82j8aq80q" path="res://src/levels/level_objects/components/durability_component.tscn" id="5_ore"]
+[ext_resource type="PackedScene" path="res://src/levels/level_objects/components/experience_component.tscn" id="6_ore"]
+[ext_resource type="PackedScene" uid="uid://c3xqe1jr0h1ye" path="res://src/levels/level_objects/components/hit_flash_component.tscn" id="7_ore"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ore"]
+resource_local_to_scene = true
+shader = ExtResource("2_ore")
+shader_parameter/flash_amount = 0.0
+shader_parameter/shake_intensity = 0.0
+shader_parameter/shake_speed = 20.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_full"]
+atlas = ExtResource("1_ore")
+region = Rect2(0, 16, 32, 16)
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ore"]
+radius = 3.0
+height = 16.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_empty"]
+atlas = ExtResource("1_ore")
+region = Rect2(64, 0, 32, 16)
+
+[node name="OreNode" type="Sprite2D" unique_id=2053066304 node_paths=PackedStringArray("empty_node")]
+z_index = 1
+material = SubResource("ShaderMaterial_ore")
+texture = SubResource("AtlasTexture_full")
+script = ExtResource("3_ore")
+empty_node = NodePath("EmptyNode")
+item_drop_delay = 0.1
+
+[node name="Area2D" type="StaticBody2D" parent="." unique_id=907162808]
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1626368091]
+position = Vector2(0, 1)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_ore")
+
+[node name="EmptyNode" type="Sprite2D" parent="." unique_id=1854115025]
+visible = false
+texture = SubResource("AtlasTexture_empty")
+
+[node name="HitBox" parent="." unique_id=585263998 instance=ExtResource("4_ore")]
+visible = false
+
+[node name="DurabilityComponent" parent="." unique_id=1501886967 instance=ExtResource("5_ore")]
+
+[node name="ExperienceComponent" parent="." unique_id=1214602757 instance=ExtResource("6_ore")]
+skill_type = 1
+
+[node name="HitFlashComponent" parent="." unique_id=259580282 instance=ExtResource("7_ore")]

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://c3tkvw32xnwtu"]
+
+[ext_resource type="Texture2D" uid="uid://2u7ojribdnxm" path="res://assets/art/world/items/Wood.png" id="1_63840"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_ywh1u"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_81adi"]
+atlas = ExtResource("1_63840")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("2_ywh1u")
+icon = SubResource("AtlasTexture_81adi")
+name = "Oak Log"
+description = "An oak log"
+item_id = "log_oak"
+value = 3
+item_type = 4
+smelt_count = 3
+metadata/_custom_type_script = "uid://lu0mhyjxpg3s"
