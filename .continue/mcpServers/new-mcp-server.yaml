@@ -1,0 +1,12 @@
+name: New MCP server
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: GODOT
+    command: npx
+    args:
+      - -y
+      - "@npgamedev/godot-mcp-server"
+    env: {
+      "GODOT_MCP_CONFIG_VERSION": "1"
+    }

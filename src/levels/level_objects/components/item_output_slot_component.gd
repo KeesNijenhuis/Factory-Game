@@ -41,11 +41,25 @@ func _try_transfer() -> void:
 ## more than one input sharing the same facing on different edge cells; for a
 ## 1x1 neighbor there's only ever one cell a given facing could belong to
 ## anyway, so this is a no-op generalization there.
+
+var test: bool = true
+
 func _find_matching_input(neighbor: Node, objects_layer: TileMapLayer, target_cell: Vector2i) -> ItemInputSlotComponent:
-	for component in AutomationUtils.get_slot_components(neighbor):
-		if component is ItemInputSlotComponent and component.enabled and component.facing == OPPOSITE_FACING[facing] and component.get_owner_cell(objects_layer) == target_cell:
-			return component
+	var components := AutomationUtils.get_slot_components(neighbor) as Array[ItemSlotComponent]
+
+	for component in components:
+		if components.size() == 1:
+			print("size 1")
+			if component is ItemInputSlotComponent and component.enabled and component.facing == OPPOSITE_FACING[facing] and component.get_owner_cell(objects_layer) == target_cell:
+
+				return component
+		# elif component.size() > 1 :
+		# 	if component is ItemInputSlotComponent and component.enabled and component.facing == OPPOSITE_FACING[facing] and component.get_owner_cell(objects_layer) == target_cell:
+		# 		#return components[(components.size() - 1) % components.size()] as ItemInputSlotComponent
+		# 		return components[1]
+
 	return null
+
 
 func _send_standalone(input_component: ItemInputSlotComponent) -> void:
 	if standalone_item == null or standalone_quantity <= 0:
@@ -57,7 +71,7 @@ func _send_standalone(input_component: ItemInputSlotComponent) -> void:
 		standalone_item = null
 
 func _send_fixed_slot(input_component: ItemInputSlotComponent) -> void:
-	var item: Item = _linked_inventory.items[linked_slot_index]
+	var item: Item =  _linked_inventory.items[linked_slot_index] 
 	if item == null:
 		return
 	var amount: int = mini(transfer_amount, _linked_inventory.quantities[linked_slot_index])

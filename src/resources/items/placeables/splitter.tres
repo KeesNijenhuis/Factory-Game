@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://b0f3mlfmg4uvs"]
+
+[ext_resource type="Texture2D" uid="uid://dbxbll6k6xtmc" path="res://assets/art/world/objects/splitter.png" id="1_ov0hx"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_wut3d"]
+[ext_resource type="PackedScene" uid="uid://csc3xrq75lbgt" path="res://src/gameplay/inventory/splitter.tscn" id="2_66k7b"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ly4s8"]
+atlas = ExtResource("1_ov0hx")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_wut3d")
+icon = SubResource("AtlasTexture_ly4s8")
+name = "Splitter"
+item_id = "splitter"
+placed_scene = ExtResource("2_66k7b")
