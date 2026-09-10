@@ -112,14 +112,19 @@ script = ExtResource("10_1rbv2")
 facing = "right"
 enabled = true
 linked_inventory_path = NodePath("../Inventory")
-linked_slot_index = 0
 metadata/_custom_type_script = "uid://8qmhgqcrq5ej"
 
 [node name="ItemOutputSlotComponent2" type="Node2D" parent="." unique_id=805413186]
 script = ExtResource("10_1rbv2")
 enabled = true
 linked_inventory_path = NodePath("../Inventory")
-linked_slot_index = 0
+metadata/_custom_type_script = "uid://8qmhgqcrq5ej"
+
+[node name="ItemOutputSlotComponent3" type="Node2D" parent="." unique_id=541027224]
+script = ExtResource("10_1rbv2")
+facing = "left"
+enabled = true
+linked_inventory_path = NodePath("../Inventory")
 metadata/_custom_type_script = "uid://8qmhgqcrq5ej"
 
 [editable path="DestructibleComponent"]

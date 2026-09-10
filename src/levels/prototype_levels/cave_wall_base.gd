@@ -20,6 +20,17 @@ const ATLAS_LEFT_EDGE: Vector2i = Vector2i(1, 4) ## wall continues to the right 
 const ATLAS_MIDDLE: Vector2i = Vector2i(2, 4) ## wall continues both sides
 const ATLAS_RIGHT_EDGE: Vector2i = Vector2i(3, 4) ## wall continues to the left only
 
+## Neighborhood positions are stored in a stable clockwise/top-left order;
+## PEERING_BITS below maps that order to Godot's sparse CellNeighbor enum.
+const PEERING_OFFSETS: Array[Vector2i] = [
+	Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1),
+	Vector2i(-1, 0),                   Vector2i(1, 0),
+	Vector2i(-1, 1),  Vector2i(0, 1),  Vector2i(1, 1),
+]
+## CellNeighbor is not a compact 0..7 enum: it also contains the four
+## side/corner positions used by hexagonal and isometric TileSets.
+const PEERING_BITS: Array[int] = [11, 12, 15, 8, 0, 7, 4, 3]
+
 
 ## wall_cells: Dictionary or Array of Vector2i wall cells (Dictionary keys
 ## are used if given a Dictionary, so callers can pass their lookup
@@ -52,3 +63,68 @@ static func _to_lookup(cells: Array) -> Dictionary:
 	for cell in cells:
 		lookup[cell] = true
 	return lookup
+
+
+## Builds a direct set_cell lookup for a terrain's peering bits. The terrain
+## solver normally does this work inside set_cells_terrain_connect(), but
+## generated chunks can avoid that expensive bulk call by selecting the same
+## atlas tile directly. Missing/partial terrain metadata is intentionally
+## tolerated: callers can fall back to terrain_connect when this is empty.
+static func build_terrain_tile_lookup(tile_set: TileSet, terrain_set: int, terrain: int) -> Dictionary:
+	var candidates: Array[Dictionary] = []
+	for source_index in range(tile_set.get_source_count()):
+		var source_id := tile_set.get_source_id(source_index)
+		var source := tile_set.get_source(source_id)
+		if not source is TileSetAtlasSource:
+			continue
+		var atlas_source: TileSetAtlasSource = source
+		for tile_index in range(atlas_source.get_tiles_count()):
+			var atlas_coords := atlas_source.get_tile_id(tile_index)
+			var alternative_count := atlas_source.get_alternative_tiles_count(atlas_coords)
+			for alternative_index in range(alternative_count):
+				var alternative_tile := atlas_source.get_alternative_tile_id(atlas_coords, alternative_index)
+				var tile_data := atlas_source.get_tile_data(atlas_coords, alternative_tile)
+				if tile_data == null \
+						or tile_data.terrain_set != terrain_set \
+						or tile_data.terrain != terrain:
+					continue
+				var required_mask := 0
+				for peering_bit in range(PEERING_OFFSETS.size()):
+					if tile_data.get_terrain_peering_bit(PEERING_BITS[peering_bit]) == terrain:
+						required_mask |= 1 << peering_bit
+				candidates.append({
+					"required": required_mask,
+					"source_id": source_id,
+					"atlas_coords": atlas_coords,
+					"alternative": alternative_tile,
+				})
+
+	if candidates.is_empty():
+		return {}
+
+	# A terrain atlas usually contains only the useful 48-blob shapes rather
+	# than all 256 masks. For each possible neighborhood choose the candidate
+	# with the most matching required bits that is still compatible with it.
+	var lookup := {}
+	for actual_mask in range(1 << PEERING_OFFSETS.size()):
+		var best: Dictionary = {}
+		var best_score := -1
+		for candidate in candidates:
+			var required: int = candidate["required"]
+			if required & actual_mask != required:
+				continue
+			var score := _bit_count(required)
+			if score > best_score:
+				best = candidate
+				best_score = score
+		if not best.is_empty():
+			lookup[actual_mask] = best
+	return lookup
+
+
+static func _bit_count(value: int) -> int:
+	var count := 0
+	while value != 0:
+		count += value & 1
+		value >>= 1
+	return count

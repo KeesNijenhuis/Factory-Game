@@ -66,6 +66,8 @@ var _flash_elapsed: float = FLASH_DURATION
 ## Overlay layer that only ever holds copies of currently-flashing cells,
 ## tinted toward white via wall_hit_flash.gdshader (see _flash_cell()).
 var _flash_layer: TileMapLayer
+var _wall_tile_lookup: Dictionary = {}
+var _wall_lookup_tileset: TileSet
 
 
 func _ready() -> void:
@@ -362,6 +364,81 @@ func _is_base_cell(cell: Vector2i) -> bool:
 		and tile_data.terrain == CaveWallBase.BASE_TERRAIN
 
 
+## Paints wall terrain using a precomputed TileSet peering-bit lookup.
+## `all_wall_cells` is supplied by generated chunks because their cells do
+## not exist on the layer yet. Returns false when the tileset has no usable
+## lookup, allowing callers to retain the terrain-connect fallback.
+func set_wall_cells_direct(cells: Array[Vector2i], all_wall_cells: Array[Vector2i] = []) -> bool:
+	var lookup := _get_wall_tile_lookup()
+	if lookup.is_empty() or cells.is_empty():
+		return false
+	var wall_set := {}
+	if all_wall_cells.is_empty():
+		for cell in cells:
+			if _is_wall_cell(cell):
+				wall_set[cell] = true
+			for offset in CaveWallBase.PEERING_OFFSETS:
+				var neighbor := cell + offset
+				if _is_wall_cell(neighbor):
+					wall_set[neighbor] = true
+	else:
+		for wall_cell in all_wall_cells:
+			wall_set[wall_cell] = true
+
+	var tile_for_cell := {}
+	for cell in cells:
+		var mask := _wall_peering_mask(cell, wall_set)
+		if not lookup.has(mask):
+			return false
+		tile_for_cell[cell] = lookup[mask]
+
+	_syncing = true
+	for cell in tile_for_cell:
+		var tile: Dictionary = tile_for_cell[cell]
+		set_cell(cell, tile["source_id"], tile["atlas_coords"], tile["alternative"])
+	_syncing = false
+	return true
+
+
+func has_direct_wall_lookup() -> bool:
+	return not _get_wall_tile_lookup().is_empty()
+
+
+func set_base_tiles_direct(base_tiles: Dictionary, sync_existing: bool = true) -> void:
+	_syncing = true
+	for cell: Vector2i in base_tiles:
+		set_cell(cell, TILESET_SOURCE_ID, base_tiles[cell])
+	_syncing = false
+	if sync_existing:
+		_sync_base_tiles()
+
+
+## Recomputes existing wall cells after a mined cell or seam change without
+## invoking the bulk terrain solver. This keeps the gameplay refresh path
+## correct while making generated painting cheap.
+func refresh_wall_cells_direct(cells: Array[Vector2i]) -> bool:
+	return set_wall_cells_direct(cells)
+
+
+func _get_wall_tile_lookup() -> Dictionary:
+	if tile_set == null:
+		return {}
+	if _wall_lookup_tileset != tile_set:
+		_wall_lookup_tileset = tile_set
+		_wall_tile_lookup = CaveWallBase.build_terrain_tile_lookup(
+			tile_set, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN
+		)
+	return _wall_tile_lookup
+
+
+func _wall_peering_mask(cell: Vector2i, wall_set: Dictionary) -> int:
+	var mask := 0
+	for index in range(CaveWallBase.PEERING_OFFSETS.size()):
+		if wall_set.has(cell + CaveWallBase.PEERING_OFFSETS[index]):
+			mask |= 1 << index
+	return mask
+
+
 ## Starts (or restarts) the white hit-flash on `wall_cell`, and on its
 ## attached Cave_Wall_Base cell underneath, if one is currently placed there.
 ## Takes effect the same frame it's called, at full FLASH_PEAK_AMOUNT, rather
@@ -399,6 +476,8 @@ func _refresh_wall_terrain_around(cell: Vector2i) -> void:
 		if _is_wall_cell(neighbor):
 			neighbor_wall_cells.append(neighbor)
 	if neighbor_wall_cells.is_empty():
+		return
+	if refresh_wall_cells_direct(neighbor_wall_cells):
 		return
 	# set_cells_terrain_connect() only recomputes a cell's shape when that
 	# cell is newly transitioning onto the terrain -- calling it on cells

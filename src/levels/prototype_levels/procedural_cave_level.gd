@@ -30,6 +30,7 @@ const ORIGIN_CHUNK: Vector2i = Vector2i.ZERO
 
 
 func _ready() -> void:
+	cave_chunk_streamer.prepare_startup_world_data(SaveManager.consume_startup_world_data())
 	var entrance_global := cave_chunk_streamer.load_initial_chunks(ORIGIN_CHUNK)
 	player_spawn_marker.global_position = entrance_global
 
@@ -39,6 +40,9 @@ func get_default_player_spawn() -> Vector2:
 
 func get_player_camera() -> Camera2D:
 	return player_camera
+
+func show_initial_grid_overview() -> void:
+	player_camera.show_world_rect(cave_chunk_streamer.get_initial_grid_rect())
 
 func get_objects_layer() -> TileMapLayer:
 	return objects_layer

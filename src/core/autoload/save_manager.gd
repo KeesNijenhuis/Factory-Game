@@ -24,6 +24,7 @@ var _main_game: MainGame = null
 var _busy: bool = false
 var _is_loading: bool = false
 var _has_completed_first_level_load: bool = false
+var _startup_quickload_data: Dictionary = {}
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -62,6 +63,26 @@ func list_slots() -> Array[Dictionary]:
 
 func quicksave() -> void:
 	_write_to_path(QUICKSAVE_PATH, -1)
+
+func has_quicksave() -> bool:
+	return FileAccess.file_exists(QUICKSAVE_PATH)
+
+func prepare_startup_quickload() -> Dictionary:
+	if not has_quicksave():
+		return {}
+	_startup_quickload_data = _read_json(QUICKSAVE_PATH)
+	return _startup_quickload_data.duplicate(true)
+
+func consume_startup_world_data() -> Dictionary:
+	var world_data: Dictionary = _startup_quickload_data.get("world_objects", {}).get("cave_chunk_streamer", {})
+	return world_data.duplicate(true)
+
+func apply_startup_quickload() -> void:
+	if _startup_quickload_data.is_empty():
+		return
+	var data := _startup_quickload_data
+	_startup_quickload_data = {}
+	await _apply_loaded_data(data, QUICKSAVE_SLOT, true)
 
 func quickload() -> void:
 	await _load_from_path(QUICKSAVE_PATH, -1)
@@ -195,14 +216,18 @@ func _load_from_path(path: String, slot: int) -> void:
 
 	_busy = true
 	_is_loading = true
+	await _apply_loaded_data(data, slot, false)
+
+func _apply_loaded_data(data: Dictionary, slot: int, world_already_applied: bool) -> void:
 
 	var hud := _find_hud()
 	if hud:
 		hud.close_all_panels()
 
 	var main_game := _main_game
-	main_game.load_level(data.get("level_uid", main_game.current_level_uid), true)
-	await main_game.level_loaded
+	if not world_already_applied:
+		main_game.load_level(data.get("level_uid", main_game.current_level_uid), true)
+		await main_game.level_loaded
 	# TileMapLayer scene-collection cells (chests, furnaces, ore/tree objects)
 	# can finish instantiating a frame or two after level_loaded fires -- wait
 	# for them to settle before scanning the "saveable" group, or objects in
@@ -224,7 +249,10 @@ func _load_from_path(path: String, slot: int) -> void:
 		hud.hotbar.emit_selection()
 
 	_apply_placed_objects(main_game.get_current_level(), data.get("placed_objects", []))
-	_apply_world_objects(main_game.get_current_level(), data.get("world_objects", {}))
+	var world_objects: Dictionary = data.get("world_objects", {}).duplicate(true)
+	if world_already_applied:
+		world_objects.erase("cave_chunk_streamer")
+	_apply_world_objects(main_game.get_current_level(), world_objects)
 	_apply_ground_items(main_game.entity_root, data.get("ground_items", []))
 	# Belts' real saved facing (just applied above via apply_save_data) can
 	# still change their segment shape after main_game's own post-load

@@ -40,6 +40,8 @@ func _handle_remove_click() -> void:
 	if slot.is_empty():
 		return
 	var component: ItemSlotComponent = slot["component"]
+	if component.applied_upgrade_item_id.is_empty():
+		return
 	component.enabled = false
 	_refund_upgrade_item(component)
 	AutomationUtils.notify_belt_manager_for_object(slot["objects_layer"], slot["target"])
@@ -126,13 +128,9 @@ func _refund_upgrade_item(component: ItemSlotComponent) -> void:
 ## end up on the same specific edge cell -- that invariant is what lets
 ## ItemOutputSlotComponent match "the" input on a neighbor unambiguously
 ## (see its _find_matching_input, which additionally checks the exact owner
-## cell for a multi-tile neighbor). Leaves facing/position unchanged if every
-## other zone is already taken.
+## cell for a multi-tile neighbor). If every zone is occupied, swaps with the
+## immediately clockwise sibling instead.
 func _cycle_facing(component: ItemSlotComponent, siblings: Array, footprint: Vector2i) -> void:
-	var occupied: Array[String] = []
-	for sibling in siblings:
-		if sibling != component:
-			occupied.append(AutomationUtils.edge_zone_key(sibling.facing, sibling.get_sub_position()))
 	var zones := AutomationUtils.get_edge_zones(footprint)
 	var current_key := AutomationUtils.edge_zone_key(component.facing, component.get_sub_position())
 	var start_index := 0
@@ -140,10 +138,46 @@ func _cycle_facing(component: ItemSlotComponent, siblings: Array, footprint: Vec
 		if AutomationUtils.edge_zone_key(zones[i]["facing"], zones[i]["sub_position"]) == current_key:
 			start_index = i
 			break
-	for step in range(1, zones.size() + 1):
-		var candidate: Dictionary = zones[(start_index + step) % zones.size()]
-		var key := AutomationUtils.edge_zone_key(candidate["facing"], candidate["sub_position"])
-		if key not in occupied:
+	var occupied: Dictionary = {}
+	for sibling in siblings:
+		if sibling == component:
+			continue
+		for zone_index in zones.size():
+			var zone: Dictionary = zones[zone_index]
+			var zone_key := AutomationUtils.edge_zone_key(zone["facing"], zone["sub_position"])
+			var sibling_key := AutomationUtils.edge_zone_key(sibling.facing, sibling.get_sub_position())
+			if sibling_key == zone_key:
+				occupied[zone_index] = sibling
+				break
+	# Exclude the selected port's current zone. It is intentionally absent
+	# from occupied, but must not count as a free destination; otherwise a
+	# completely occupied layout returns here and the swap path is unreachable.
+	for step in range(1, zones.size()):
+		var candidate_index := (start_index + step) % zones.size()
+		var candidate: Dictionary = zones[candidate_index]
+		if not occupied.has(candidate_index):
 			component.facing = candidate["facing"]
 			component.position = AutomationUtils.get_edge_local_position(footprint, candidate["facing"], candidate["sub_position"])
 			return
+
+	var clockwise_index := (start_index + 1) % zones.size()
+	var clockwise_zone: Dictionary = zones[clockwise_index]
+	var clockwise_component: ItemSlotComponent = occupied.get(clockwise_index) as ItemSlotComponent
+	if clockwise_component == null:
+		return
+	var previous_zone := {
+		"facing": component.facing,
+		"sub_position": component.get_sub_position(),
+	}
+	component.facing = clockwise_zone["facing"]
+	component.position = AutomationUtils.get_edge_local_position(
+		footprint,
+		clockwise_zone["facing"],
+		clockwise_zone["sub_position"]
+	)
+	clockwise_component.facing = previous_zone["facing"]
+	clockwise_component.position = AutomationUtils.get_edge_local_position(
+		footprint,
+		previous_zone["facing"],
+		previous_zone["sub_position"]
+	)

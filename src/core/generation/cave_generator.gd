@@ -40,25 +40,248 @@ static func generate(config: CaveGenerationConfig) -> CaveData:
 	return _generate_from_seed(config, base_seed)
 
 
-## Per-chunk entry point: deterministically derives a chunk seed from
-## world_seed + chunk_coord (same string-hash pattern _generate_from_seed()
-## already uses for retry sub-seeds), so the same world_seed always produces
-## the same chunk at the same coordinate regardless of generation order.
-## Each CaveGenerator instance is fully self-contained (own _rng/_data, no
-## shared mutable state), so chunks are provably independent -- see
-## tools/cave_chunk_gen_reproducibility_check.gd.
+## Per-chunk entry point: derives metadata from world_seed + chunk_coord while
+## the actual layout is sampled in shared world space. The same world_seed
+## therefore produces the same chunk at the same coordinate regardless of
+## generation order, and neighboring chunks agree across their shared seams.
 static func generate_chunk(config: CaveGenerationConfig, chunk_coord: Vector2i, world_seed: int) -> CaveData:
 	var chunk_seed := ("%d_%d_%d" % [world_seed, chunk_coord.x, chunk_coord.y]).hash()
-	var data := _generate_from_seed(config, chunk_seed)
+	var data := _generate_world_space_chunk(config, chunk_coord, world_seed)
+	data.seed_used = chunk_seed
 	data.chunk_coord = chunk_coord
 	return data
+
+
+## Chunk generation deliberately samples a shared world-space field instead of
+## seeding a fresh local map per chunk. Rooms and corridor endpoints live on a
+## deterministic world lattice, while the background field and decoration
+## noise are sampled with world coordinates. Consequently both sides of a
+## chunk boundary make exactly the same decision for the same world cell and
+## a room/corridor can cross any number of chunk edges.
+static func _generate_world_space_chunk(config: CaveGenerationConfig, chunk_coord: Vector2i, world_seed: int) -> CaveData:
+	var size := Vector2i(config.map_width, config.map_height)
+	var data := CaveData.new(size.x, size.y)
+	var origin := chunk_coord * size
+	var field := FastNoiseLite.new()
+	field.seed = _world_hash(world_seed, 17, 0, 0)
+	field.frequency = 0.055
+	field.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+
+	for y in range(size.y):
+		for x in range(size.x):
+			var world_cell := origin + Vector2i(x, y)
+			if field.get_noise_2d(world_cell.x, world_cell.y) < 0.08:
+				data.set_tile(Vector2i(x, y), CaveData.TileType.FLOOR)
+
+	var density_spacing := sqrt(float(config.map_width * config.map_height) / float(maxi(1, config.room_count)))
+	var feature_spacing := (config.room_radius_max * 2.0 + config.corridor_width * 3.0) * 2.0
+	var spacing := maxi(24, ceili(maxf(density_spacing, feature_spacing)))
+	var min_lattice_x := floori(float(origin.x) / spacing) - 1
+	var max_lattice_x := floori(float(origin.x + size.x) / spacing) + 1
+	var min_lattice_y := floori(float(origin.y) / spacing) - 1
+	var max_lattice_y := floori(float(origin.y + size.y) / spacing) + 1
+	var rooms: Dictionary = {}
+	for lattice_y in range(min_lattice_y, max_lattice_y + 1):
+		for lattice_x in range(min_lattice_x, max_lattice_x + 1):
+			var lattice := Vector2i(lattice_x, lattice_y)
+			var descriptor := _world_room_descriptor(config, world_seed, lattice, spacing)
+			rooms[lattice] = descriptor
+			var center: Vector2i = descriptor["center"]
+			if center.x >= origin.x - ceili(config.room_radius_max) and center.x < origin.x + size.x + ceili(config.room_radius_max) \
+					and center.y >= origin.y - ceili(config.room_radius_max) and center.y < origin.y + size.y + ceili(config.room_radius_max):
+				_stamp_world_room(data, origin, center, descriptor.radius, config.room_roughness)
+				if center.x >= origin.x and center.x < origin.x + size.x and center.y >= origin.y and center.y < origin.y + size.y:
+					data.room_centers.append(center - origin)
+
+	for lattice_y in range(min_lattice_y, max_lattice_y + 1):
+		for lattice_x in range(min_lattice_x, max_lattice_x + 1):
+			var lattice := Vector2i(lattice_x, lattice_y)
+			var from_room: Dictionary = rooms.get(lattice, {})
+			if from_room.is_empty():
+				continue
+			for neighbor in [lattice + Vector2i.RIGHT, lattice + Vector2i.DOWN]:
+				if not rooms.has(neighbor):
+					continue
+				var to_room: Dictionary = rooms[neighbor]
+				_stamp_world_corridor(
+					data,
+					origin,
+					from_room["center"],
+					to_room["center"],
+					config.corridor_width,
+					config.corridor_max_turn_degrees,
+					_world_hash(world_seed, lattice.x, lattice.y, neighbor.x * 31 + neighbor.y)
+				)
+
+	_set_world_entrance(data, origin)
+	_decorate_world_space_chunk(data, config, origin, world_seed)
+	return data
+
+
+static func _world_room_descriptor(config: CaveGenerationConfig, world_seed: int, lattice: Vector2i, spacing: int) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = _world_hash(world_seed, lattice.x, lattice.y, 101)
+	var jitter := maxi(1, spacing / 5)
+	var center := lattice * spacing + Vector2i(
+		spacing / 2 + rng.randi_range(-jitter, jitter),
+		spacing / 2 + rng.randi_range(-jitter, jitter)
+	)
+	var radius := rng.randf_range(config.room_radius_min, config.room_radius_max)
+	return {"center": center, "radius": radius}
+
+
+static func _stamp_world_room(data: CaveData, origin: Vector2i, center: Vector2i, radius: float, roughness: float) -> void:
+	var bounds := ceili(radius) + 1
+	for dy in range(-bounds, bounds + 1):
+		for dx in range(-bounds, bounds + 1):
+			var world_cell := center + Vector2i(dx, dy)
+			var distance := Vector2(dx, dy).length()
+			var edge_jitter := 1.0 + roughness * 0.12 * sin(float((world_cell.x * 13 + world_cell.y * 7) % 31))
+			if distance <= radius * edge_jitter:
+				var local_cell := world_cell - origin
+				if data.is_in_bounds(local_cell):
+					data.set_tile(local_cell, CaveData.TileType.FLOOR)
+
+
+static func _stamp_world_corridor(
+	data: CaveData,
+	origin: Vector2i,
+	from: Vector2i,
+	to: Vector2i,
+	width: int,
+	max_turn_degrees: float,
+	corridor_seed: int
+) -> void:
+	var distance := Vector2(from - to).length()
+	var steps := maxi(1, ceili(distance * 1.5))
+	var perpendicular := (Vector2(to - from).normalized().rotated(PI / 2.0))
+	for i in range(steps + 1):
+		var t := float(i) / float(steps)
+		var jitter := (sin(float(i * 17 + absi(corridor_seed % 97))) * 0.5 + 0.5)
+		jitter = (jitter * 2.0 - 1.0) * minf(float(width) * 1.5, max_turn_degrees / 20.0)
+		var point := Vector2(from).lerp(Vector2(to), t) + perpendicular * jitter
+		var local_cell := Vector2i(point.round()) - origin
+		CaveGenMath.stamp_disk(data, local_cell, maxf(0.5, width / 2.0), CaveData.TileType.FLOOR)
+
+
+static func _set_world_entrance(data: CaveData, origin: Vector2i) -> void:
+	var best := Vector2i.ZERO
+	var best_distance := INF
+	# The origin chunk is the player's permanent starting area. Keep its
+	# entrance near world cell (0, 0); other chunks retain a local center
+	# anchor for debug/streaming metadata.
+	var target := Vector2i.ONE if origin == Vector2i.ZERO else origin + Vector2i(data.width / 2, data.height / 2)
+	for y in range(data.height):
+		for x in range(data.width):
+			var cell := Vector2i(x, y)
+			if data.get_tile(cell) != CaveData.TileType.FLOOR:
+				continue
+			var distance := Vector2(origin + cell - target).length_squared()
+			if distance < best_distance:
+				best_distance = distance
+				best = cell
+	if best_distance == INF:
+		best = Vector2i.ONE if origin == Vector2i.ZERO else Vector2i(data.width / 2, data.height / 2)
+		data.set_tile(best, CaveData.TileType.FLOOR)
+	data.entrance_position = best
+
+
+static func _decorate_world_space_chunk(data: CaveData, config: CaveGenerationConfig, origin: Vector2i, world_seed: int) -> void:
+	for vein_config in config.ore_veins:
+		if vein_config == null or vein_config.ore_type == null:
+			continue
+		var noise := FastNoiseLite.new()
+		noise.seed = _world_hash(world_seed, vein_config.seed_offset, 211, 0)
+		noise.frequency = vein_config.noise_frequency
+		noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+		var tile_type := CaveOreVeinConfig.slot_to_tile_type(vein_config.ore_slot)
+		for y in range(data.height):
+			for x in range(data.width):
+				var cell := Vector2i(x, y)
+				if data.get_tile(cell) != CaveData.TileType.WALL:
+					continue
+				var world_cell := origin + cell
+				var value := (noise.get_noise_2d(world_cell.x, world_cell.y) + 1.0) / 2.0
+				if value >= vein_config.vein_threshold and value <= vein_config.vein_threshold + vein_config.band_width:
+					data.set_tile(cell, tile_type)
+
+	var liquid_noise := FastNoiseLite.new()
+	liquid_noise.seed = _world_hash(world_seed, 307, 0, 0)
+	liquid_noise.frequency = 0.09
+	liquid_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	for y in range(data.height):
+		for x in range(data.width):
+			var cell := Vector2i(x, y)
+			if data.get_tile(cell) != CaveData.TileType.FLOOR:
+				continue
+			var world_cell := origin + cell
+			var value := (liquid_noise.get_noise_2d(world_cell.x, world_cell.y) + 1.0) / 2.0
+			if config.enable_water and config.water_pool_count > 0 and value > 0.88:
+				data.set_tile(cell, CaveData.TileType.WATER)
+			elif config.enable_lava and config.lava_pool_count > 0 and value > 0.96:
+				data.set_tile(cell, CaveData.TileType.LAVA)
+
+	_place_world_ore_nodes(data, config, origin, world_seed)
+
+
+static func _place_world_ore_nodes(data: CaveData, config: CaveGenerationConfig, origin: Vector2i, world_seed: int) -> void:
+	var rules: Array[CaveOreNodeConfig] = []
+	var weights: Array[float] = []
+	for rule in config.ore_node_rules:
+		if rule != null and rule.node_type != null and rule.rarity_weight > 0.0:
+			rules.append(rule)
+			weights.append(rule.rarity_weight)
+	if rules.is_empty():
+		return
+	var candidates: Array[Dictionary] = []
+	for y in range(data.height):
+		for x in range(data.width):
+			var cell := Vector2i(x, y)
+			if data.get_tile(cell) != CaveData.TileType.FLOOR or cell == data.entrance_position:
+				continue
+			var world_cell := origin + cell
+			candidates.append({"cell": cell, "score": _world_unit_hash(world_seed, world_cell.x, world_cell.y, 401)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["score"] > b["score"])
+	var placed: Array[Vector2i] = []
+	var total_weight := 0.0
+	for weight in weights:
+		total_weight += weight
+	for candidate in candidates:
+		if placed.size() >= config.ore_node_total_count:
+			break
+		var cell: Vector2i = candidate["cell"]
+		var far_enough := true
+		for other in placed:
+			if Vector2(cell - other).length() < config.ore_node_min_separation:
+				far_enough = false
+				break
+		if not far_enough:
+			continue
+		var choice := int(floori(_world_unit_hash(world_seed, origin.x + cell.x, origin.y + cell.y, 409) * total_weight))
+		var cumulative := 0.0
+		var rule_index := 0
+		for i in range(weights.size()):
+			cumulative += weights[i]
+			if choice < cumulative:
+				rule_index = i
+				break
+		data.ore_node_placements[cell] = rules[rule_index].node_type
+		placed.append(cell)
+
+
+static func _world_unit_hash(world_seed: int, x: int, y: int, salt: int) -> float:
+	var hashed := _world_hash(world_seed, x, y, salt)
+	return float(posmod(hashed, 1000000)) / 1000000.0
+
+
+static func _world_hash(world_seed: int, x: int, y: int, salt: int) -> int:
+	return ("%d:%d:%d:%d" % [world_seed, x, y, salt]).hash()
 
 
 ## Retries with a deterministic derived sub-seed up to
 ## config.max_generation_retries times if a layout doesn't pass connectivity
 ## validation; returns the best attempt (never null) if every retry fails.
 static func _generate_from_seed(config: CaveGenerationConfig, base_seed: int) -> CaveData:
-	var total_start := Time.get_ticks_usec()
 	var last_generator: CaveGenerator = null
 	var last_seed := base_seed
 	for attempt in range(config.max_generation_retries + 1):
@@ -66,27 +289,17 @@ static func _generate_from_seed(config: CaveGenerationConfig, base_seed: int) ->
 		var rng := RandomNumberGenerator.new()
 		rng.seed = attempt_seed
 		var generator := CaveGenerator.new()
-		var attempt_start := Time.get_ticks_usec()
 		generator._generate_core_layout(rng, config)
 		last_generator = generator
 		last_seed = attempt_seed
-		print("CaveGenerator: attempt %d (seed=%d) core layout %s in %.1f ms" % [
-			attempt, attempt_seed, "valid" if generator.is_valid else "invalid", _elapsed_ms(attempt_start),
-		])
 		if generator.is_valid:
 			generator._decorate()
 			generator._data.seed_used = attempt_seed
-			print("CaveGenerator: generate() total %.1f ms (%d attempt(s))" % [_elapsed_ms(total_start), attempt + 1])
 			return generator._data
 	push_warning("CaveGenerator: exhausted %d attempts without a fully connected layout -- using the best attempt anyway." % (config.max_generation_retries + 1))
 	last_generator._decorate()
 	last_generator._data.seed_used = last_seed
-	print("CaveGenerator: generate() total %.1f ms (%d attempt(s), none valid)" % [_elapsed_ms(total_start), config.max_generation_retries + 1])
 	return last_generator._data
-
-
-static func _elapsed_ms(start_usec: int) -> float:
-	return (Time.get_ticks_usec() - start_usec) / 1000.0
 
 
 func _generate_core_layout(rng: RandomNumberGenerator, config: CaveGenerationConfig) -> void:
@@ -94,23 +307,15 @@ func _generate_core_layout(rng: RandomNumberGenerator, config: CaveGenerationCon
 	_config = config
 	_data = CaveData.new(config.map_width, config.map_height)
 
-	var t := Time.get_ticks_usec()
 	_carve_rooms_and_corridors()
-	print("  rooms & corridors: %.1f ms" % _elapsed_ms(t)); t = Time.get_ticks_usec()
 	_smooth_with_cellular_automata()
-	print("  CA smoothing: %.1f ms" % _elapsed_ms(t)); t = Time.get_ticks_usec()
 	is_valid = _resolve_connectivity()
-	print("  connectivity resolution: %.1f ms" % _elapsed_ms(t))
 
 
 func _decorate() -> void:
-	var t := Time.get_ticks_usec()
 	_generate_ore_veins()
-	print("  ore veins: %.1f ms" % _elapsed_ms(t)); t = Time.get_ticks_usec()
 	_generate_water_lava_pools()
-	print("  water/lava pools: %.1f ms" % _elapsed_ms(t)); t = Time.get_ticks_usec()
 	_generate_ore_nodes()
-	print("  ore nodes: %.1f ms" % _elapsed_ms(t))
 
 
 # ---------------------------------------------------------------------------

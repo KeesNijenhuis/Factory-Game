@@ -7,3 +7,6 @@ var enable_item_cheat: bool = false
 var enable_camera_zoom: bool = false
 var show_ore_debug_draw: bool = false
 var show_placement_footprint: bool = false
+## Enables detailed cave generation/streaming timing logs without adding
+## per-frame logging to normal debug runs.
+var profile_cave_generation: bool = OS.is_debug_build()

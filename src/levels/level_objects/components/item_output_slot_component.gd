@@ -4,16 +4,33 @@ extends ItemSlotComponent
 ## tile in its facing direction and, if there's an ItemInputSlotComponent
 ## there facing back at it, pushes up to transfer_amount items into it.
 
+const ROUND_ROBIN_INDEX_META: StringName = &"_item_output_round_robin_index"
+
 var _transfer_accumulator: float = 0.0
 
 func _process(delta: float) -> void:
 	if not enabled:
 		return
+	var outputs := _get_enabled_outputs()
+	if outputs.is_empty() or outputs[0] != self:
+		return
 	_transfer_accumulator += delta
 	if _transfer_accumulator < transfer_interval:
 		return
 	_transfer_accumulator = 0.0
-	_try_transfer()
+	var cursor: int = posmod(int(get_parent().get_meta(ROUND_ROBIN_INDEX_META, 0)), outputs.size())
+	var output: ItemOutputSlotComponent = outputs[cursor]
+	get_parent().set_meta(ROUND_ROBIN_INDEX_META, (cursor + 1) % outputs.size())
+	output._try_transfer()
+
+## Child order is the stable output order used by the editor and by
+## AutomationUtils when upgrades are assigned.
+func _get_enabled_outputs() -> Array[ItemOutputSlotComponent]:
+	var outputs: Array[ItemOutputSlotComponent] = []
+	for component in get_parent().get_children():
+		if component is ItemOutputSlotComponent and component.enabled:
+			outputs.append(component)
+	return outputs
 
 func _try_transfer() -> void:
 	var objects_layer := AutomationUtils.get_objects_layer(self)
@@ -41,22 +58,12 @@ func _try_transfer() -> void:
 ## more than one input sharing the same facing on different edge cells; for a
 ## 1x1 neighbor there's only ever one cell a given facing could belong to
 ## anyway, so this is a no-op generalization there.
-
-var test: bool = true
-
 func _find_matching_input(neighbor: Node, objects_layer: TileMapLayer, target_cell: Vector2i) -> ItemInputSlotComponent:
 	var components := AutomationUtils.get_slot_components(neighbor) as Array[ItemSlotComponent]
 
 	for component in components:
-		if components.size() == 1:
-			print("size 1")
-			if component is ItemInputSlotComponent and component.enabled and component.facing == OPPOSITE_FACING[facing] and component.get_owner_cell(objects_layer) == target_cell:
-
-				return component
-		# elif component.size() > 1 :
-		# 	if component is ItemInputSlotComponent and component.enabled and component.facing == OPPOSITE_FACING[facing] and component.get_owner_cell(objects_layer) == target_cell:
-		# 		#return components[(components.size() - 1) % components.size()] as ItemInputSlotComponent
-		# 		return components[1]
+		if component is ItemInputSlotComponent and component.enabled and component.get_owner_cell(objects_layer) == target_cell:
+			return component
 
 	return null
 

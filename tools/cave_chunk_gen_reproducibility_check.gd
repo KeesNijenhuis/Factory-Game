@@ -24,6 +24,8 @@ func _init() -> void:
 		failures.append("same chunk_coord: seed_used differs (%d vs %d)" % [a.seed_used, b.seed_used])
 	if not a.grid_equals(b):
 		failures.append("same chunk_coord: tile grid differs")
+	if a.ore_node_placements.keys() != b.ore_node_placements.keys():
+		failures.append("same chunk_coord: ore-node placement cells differ")
 	if a.entrance_position != b.entrance_position or a.room_centers != b.room_centers:
 		failures.append("same chunk_coord: entrance/room_centers differ")
 	if a.chunk_coord != Vector2i(3, -2) or b.chunk_coord != Vector2i(3, -2):
@@ -35,12 +37,35 @@ func _init() -> void:
 		failures.append("adjacent chunk_coord produced an identical grid -- suspicious state sharing")
 	if a.seed_used == c.seed_used:
 		failures.append("adjacent chunk_coord produced the same seed_used")
+	if _count_wall_ore(a) == 0:
+		failures.append("deterministic sample chunk produced no wall ore for overlay validation")
 
 	# (b2) order independence: generating in a different order shouldn't change results
 	var c_first := CaveGenerator.generate_chunk(config, Vector2i(3, -1), FIXED_WORLD_SEED)
 	var a_second := CaveGenerator.generate_chunk(config, Vector2i(3, -2), FIXED_WORLD_SEED)
 	if not c_first.grid_equals(c) or not a_second.grid_equals(a):
 		failures.append("generation order affected chunk output -- chunks are not independent")
+
+	# Cross-chunk feature continuity: search a small deterministic neighborhood
+	# for a shared edge where the generated floor crosses from one chunk into
+	# the next. Independent local maps rarely produce such a connection, while
+	# the world-space generator can produce one naturally.
+	var crossing_found := false
+	for chunk_y in range(-2, 3):
+		for chunk_x in range(-2, 2):
+			var left := CaveGenerator.generate_chunk(config, Vector2i(chunk_x, chunk_y), FIXED_WORLD_SEED)
+			var right := CaveGenerator.generate_chunk(config, Vector2i(chunk_x + 1, chunk_y), FIXED_WORLD_SEED)
+			for y in range(config.map_height):
+				if left.get_tile(Vector2i(config.map_width - 1, y)) == CaveData.TileType.FLOOR \
+						and right.get_tile(Vector2i.ZERO + Vector2i(0, y)) == CaveData.TileType.FLOOR:
+					crossing_found = true
+					break
+			if crossing_found:
+				break
+		if crossing_found:
+			break
+	if not crossing_found:
+		failures.append("no floor feature crossed a chunk seam in the deterministic sample")
 
 	# (c) flat timing across many chunks
 	var timings: Array[float] = []
@@ -73,3 +98,15 @@ func _average(values: Array[float]) -> float:
 	for v in values:
 		total += v
 	return total / values.size()
+
+
+func _count_wall_ore(data: CaveData) -> int:
+	var count := 0
+	for y in range(data.height):
+		for x in range(data.width):
+			var tile := data.get_tile(Vector2i(x, y))
+			if tile == CaveData.TileType.ORE_COPPER \
+					or tile == CaveData.TileType.ORE_IRON \
+					or tile == CaveData.TileType.ORE_GOLD:
+				count += 1
+	return count

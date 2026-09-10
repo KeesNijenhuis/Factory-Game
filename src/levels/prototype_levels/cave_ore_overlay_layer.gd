@@ -152,6 +152,20 @@ func resync() -> void:
 		_apply_cell(cell)
 
 
+## Re-sync only ore cells whose wall neighborhood may have changed. This is
+## used for chunk seam updates, where a full overlay rebuild would revisit
+## every ore cell in the loaded world.
+func resync_around(changed_cells: Array[Vector2i]) -> void:
+	var affected := {}
+	for changed_cell in changed_cells:
+		for offset in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var cell: Vector2i = changed_cell + offset
+			if _ore_cells.has(cell):
+				affected[cell] = true
+	for cell: Vector2i in affected:
+		_apply_cell(cell)
+
+
 ## Picks the right art for `cell`, following the rule the game designer
 ## wants: fully-enclosed ore cells always get one of their ore's fallback
 ## sprites (picked at random); otherwise an exposed cell shows the mirrored

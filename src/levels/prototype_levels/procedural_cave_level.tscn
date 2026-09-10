@@ -12,7 +12,7 @@
 [ext_resource type="Script" uid="uid://crvbumijdhsnk" path="res://src/resources/cave_generation/cave_ore_vein_config.gd" id="10_nkk1j"]
 [ext_resource type="Script" uid="uid://ngg3sdct6jp3" path="res://src/levels/prototype_levels/cave_chunk_streamer.gd" id="10_streamer"]
 [ext_resource type="Script" uid="uid://bq6dl8wmxqcc1" path="res://src/resources/cave_generation/cave_generation_config.gd" id="11_1tsxc"]
-[ext_resource type="Resource" path="res://src/resources/cave_generation/presets/default_streaming.tres" id="11_streaming_config"]
+[ext_resource type="Resource" uid="uid://bibwl3emg52ji" path="res://src/resources/cave_generation/presets/default_streaming.tres" id="11_streaming_config"]
 
 [sub_resource type="Resource" id="Resource_l6ec0"]
 script = ExtResource("11_1tsxc")
@@ -22,6 +22,7 @@ room_placement_attempts = 10
 metadata/_custom_type_script = "uid://bq6dl8wmxqcc1"
 
 [node name="ProceduralCaveLevel" type="Node2D" unique_id=673103904]
+y_sort_enabled = true
 script = ExtResource("1_root")
 
 [node name="Tilemaps" type="Node2D" parent="." unique_id=155001495]

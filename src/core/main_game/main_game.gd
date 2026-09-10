@@ -9,6 +9,9 @@ const PROC_LEVEL: String = "res://src/levels/prototype_levels/procedural_cave_le
 
 const PLAYER_SCENE_UID : String = "uid://doiund6pbioe4"
 
+@export var load_quicksave_on_start: bool = false
+@export var show_initial_chunk_grid_debug_view: bool = false
+
 signal level_loaded(level: BaseLevel)
 
 var player: Player = null
@@ -29,8 +32,14 @@ var _current_level: BaseLevel = null
 func _ready() -> void:
 	SaveManager.register_main_game(self)
 	_init_player()
-	load_level(STARTING_LEVEL)
-	#load_level(PROC_LEVEL)
+	var startup_data := SaveManager.prepare_startup_quickload() if load_quicksave_on_start else {}
+	var startup_level: String = startup_data.get("level_uid", PROC_LEVEL)
+	load_level(startup_level, not startup_data.is_empty())
+	await level_loaded
+	if not startup_data.is_empty():
+		await SaveManager.apply_startup_quickload()
+	if show_initial_chunk_grid_debug_view and _current_level.has_method("show_initial_grid_overview"):
+		_current_level.show_initial_grid_overview()
 	
 func _input(event: InputEvent) -> void:
 	if not OS.is_debug_build():

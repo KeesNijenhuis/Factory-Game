@@ -17,9 +17,9 @@ class_name CaveWorldStreamingConfig
 ## Chebyshev-radius, in chunks, built synchronously at level load -- the
 ## player must never see an unloaded chunk in the first few steps in any
 ## direction. Keep small; this cost is paid up front, unbudgeted.
-@export var initial_load_radius_chunks: int = 1
+@export var initial_load_radius_chunks: int = 2
 ## Steady-state Chebyshev radius, in chunks, that stays loaded/visible.
-@export var load_radius_chunks: int = 2
+@export var load_radius_chunks: int = 3
 ## Extra ring built proactively beyond load_radius_chunks, before the player
 ## is anywhere near its edge, so a chunk's load cost is paid off-screen.
 @export var preload_margin_chunks: int = 1
@@ -27,7 +27,14 @@ class_name CaveWorldStreamingConfig
 ## current chunk (must be >= load_radius_chunks + preload_margin_chunks, or
 ## chunks would unload the instant they're queued) -- prevents load/unload
 ## thrashing right at the boundary.
-@export var keep_radius_chunks: int = 3
+@export var keep_radius_chunks: int = 4
+## Delay clearing an out-of-range chunk. A short grace period lets boundary
+## oscillation reuse the already-painted chunk instead of rebuilding it.
+@export var unload_grace_seconds: float = 1.5
+## Bounded generated-data LRU retained after a grace-period unload. Retained
+## data is pure CaveData and is repainted on reuse; mutations remain in the
+## streamer's save record rather than in this cache.
+@export var retained_chunk_capacity: int = 4
 ## Never start a second chunk build while one is already running -- bounds
 ## the worst-case per-frame cost to exactly one chunk's, never compounding.
 @export var max_chunk_loads_in_flight: int = 1

@@ -27,15 +27,10 @@ extends Node
 ## wherever it hasn't been shovel-dug (verified directly against that
 ## scene's tile data).
 ##
-## The wall pass (set_cells_terrain_connect()) is the one atomic, never-
-## sub-batched step in the whole pipeline -- measured at ~0.22-0.25ms per
-## wall cell, essentially flat regardless of batch size. Splitting it across
-## multiple calls (e.g. to spread a chunk's load across frames) would leave
-## cells on a sub-batch seam reading a wrong autotile shape until a later
-## batch touches them: a visible glitch, worse than a bounded, one-shot
-## hitch. Every OTHER pass (ground fill, base caps, ore overlay, liquids,
-## ore-node instancing) has no neighbor-shape dependency and is safe to
-## yield between -- see build_chunk_async().
+## Generated wall cells use CaveWallsLayer's direct terrain-peering lookup,
+## avoiding the expensive bulk terrain solver. If a tileset has incomplete
+## metadata the layer falls back to set_cells_terrain_connect(). All other
+## paint passes are safe to budget across frames -- see build_chunk_async().
 
 const PLAIN_FLOOR_SOURCE_ID: int = 0
 const PLAIN_FLOOR_ATLAS_COORDS: Vector2i = Vector2i(4, 4)
@@ -49,6 +44,10 @@ const WATER_ATLAS_COORDS: Vector2i = Vector2i(0, 0)
 @export var ore_overlay_layer_path: NodePath
 @export var liquids_layer_path: NodePath
 @export var objects_layer_path: NodePath
+## Maximum number of generated tile writes per frame on the asynchronous
+## streaming path. Wall terrain is selected directly from peering bits, so it
+## can also be safely split when the lookup is available.
+@export var async_paint_cells_per_frame: int = 256
 
 var walls_layer: CaveWallsLayer
 var ground_layer: CaveGroundLayer
@@ -60,6 +59,7 @@ var objects_layer: TileMapLayer
 ## built chunk -- lets clear_chunk() free exactly (and only) the ones this
 ## chunk placed, without scanning/filtering objects_layer's whole child list.
 var _chunk_object_instances: Dictionary = {}
+var _ore_types_by_tile: Dictionary = {}
 
 
 func _ready() -> void:
@@ -68,6 +68,16 @@ func _ready() -> void:
 	ore_overlay_layer = get_node(ore_overlay_layer_path)
 	liquids_layer = get_node(liquids_layer_path)
 	objects_layer = get_node(objects_layer_path)
+	_ore_types_by_tile = _build_ore_type_lookup()
+
+
+## The streaming scene assigns its chunk config after this node's _ready()
+## (the scene keeps a lightweight placeholder config for editor previews).
+## Refreshing the derived lookup here is required for generated ore veins to
+## reach CaveOreOverlayLayer in streamed chunks.
+func set_generation_config(generation_config: CaveGenerationConfig) -> void:
+	config = generation_config
+	_ore_types_by_tile = _build_ore_type_lookup()
 
 
 ## Legacy whole-map entry point: generates via CaveGenerator.generate() and
@@ -75,19 +85,38 @@ func _ready() -> void:
 func generate_and_build() -> CaveData:
 	var total_start := Time.get_ticks_usec()
 	var data := CaveGenerator.generate(config)
-	print("CaveBuilder: generation %.1f ms" % _elapsed_ms(total_start))
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: generation %.1f ms" % _elapsed_ms(total_start))
 
 	var paint_start := Time.get_ticks_usec()
+	var clear_start := Time.get_ticks_usec()
 	walls_layer.clear()
 	ground_layer.clear()
 	liquids_layer.clear()
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: clear layers %.1f ms" % _elapsed_ms(clear_start))
+	var ground_start := Time.get_ticks_usec()
 	_paint_ground_pass(data, Vector2i.ZERO, {})
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: ground paint %.1f ms" % _elapsed_ms(ground_start))
+	var wall_start := Time.get_ticks_usec()
 	var wall_cells := _paint_wall_and_base_pass(data, Vector2i.ZERO)
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: wall/base paint %.1f ms" % _elapsed_ms(wall_start))
+	var ore_start := Time.get_ticks_usec()
 	_paint_ore_overlay_pass(data, Vector2i.ZERO, wall_cells)
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: ore overlay paint %.1f ms" % _elapsed_ms(ore_start))
+	var liquid_start := Time.get_ticks_usec()
 	_paint_liquids_pass(data, Vector2i.ZERO)
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: liquid paint %.1f ms" % _elapsed_ms(liquid_start))
+	var node_start := Time.get_ticks_usec()
 	_instance_ore_nodes(data, Vector2i.ZERO, {}, false)
-	print("CaveBuilder: painting %.1f ms" % _elapsed_ms(paint_start))
-	print("CaveBuilder: generate_and_build() total %.1f ms" % _elapsed_ms(total_start))
+	if DebugSettings.profile_cave_generation:
+		print("CaveBuilder: ore node instancing %.1f ms" % _elapsed_ms(node_start))
+		print("CaveBuilder: painting %.1f ms" % _elapsed_ms(paint_start))
+		print("CaveBuilder: generate_and_build() total %.1f ms" % _elapsed_ms(total_start))
 	return data
 
 
@@ -100,36 +129,105 @@ func generate_and_build() -> CaveData:
 ## mined/dug cells from the fresh paint and restores depleted/damaged ore
 ## nodes, so a rebuilt chunk shows exactly what the player left behind
 ## rather than pristine terrain.
-func build_chunk(chunk_coord: Vector2i, world_seed: int, mutation_record: Dictionary = {}) -> CaveData:
-	var data := CaveGenerator.generate_chunk(config, chunk_coord, world_seed)
+func build_chunk(
+	chunk_coord: Vector2i,
+	world_seed: int,
+	mutation_record: Dictionary = {},
+	cached_data: CaveData = null
+) -> CaveData:
+	var total_start := Time.get_ticks_usec()
+	var data: CaveData = cached_data
+	if data == null:
+		data = CaveGenerator.generate_chunk(config, chunk_coord, world_seed)
+	var generation_done := Time.get_ticks_usec()
 	var world_offset := _chunk_world_offset(chunk_coord)
 	_paint_ground_pass(data, world_offset, mutation_record)
+	var ground_done := Time.get_ticks_usec()
+	var wall_start := Time.get_ticks_usec()
 	var wall_cells := _paint_wall_and_base_pass(data, world_offset, mutation_record)
+	var wall_done := Time.get_ticks_usec()
+	var ore_start := Time.get_ticks_usec()
 	_paint_ore_overlay_pass(data, world_offset, wall_cells)
+	var ore_done := Time.get_ticks_usec()
+	var liquid_start := Time.get_ticks_usec()
 	_paint_liquids_pass(data, world_offset)
+	var liquid_done := Time.get_ticks_usec()
+	var node_start := Time.get_ticks_usec()
 	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}), true)
+	var node_done := Time.get_ticks_usec()
+	var boundary_start := Time.get_ticks_usec()
 	_refresh_chunk_boundary(chunk_coord)
+	if DebugSettings.profile_cave_generation:
+		print("CaveChunkProfile phase=complete chunk=(%d,%d) generation_ms=%.1f ground_ms=%.1f wall_ms=%.1f ore_ms=%.1f liquids_ms=%.1f nodes_ms=%.1f boundary_ms=%.1f total_ms=%.1f" % [
+			chunk_coord.x, chunk_coord.y, (generation_done - total_start) / 1000.0,
+			(ground_done - generation_done) / 1000.0, (wall_done - wall_start) / 1000.0,
+			(ore_done - ore_start) / 1000.0, (liquid_done - liquid_start) / 1000.0,
+			(node_done - node_start) / 1000.0, _elapsed_ms(boundary_start), _elapsed_ms(total_start),
+		])
 	return data
 
 
-## Steady-state chunk build: same result as build_chunk(), but yields a
-## frame between every pass that has no neighbor-shape dependency, so a
-## chunk load never costs more than one uninterrupted frame at a time. The
-## wall pass itself is never yielded around -- see class doc.
-func build_chunk_async(chunk_coord: Vector2i, world_seed: int, mutation_record: Dictionary = {}) -> CaveData:
-	var data := CaveGenerator.generate_chunk(config, chunk_coord, world_seed)
+## Steady-state chunk build: same result as build_chunk(), but yields after
+## bounded paint batches so a chunk load never costs more than one small
+## uninterrupted frame at a time. Pure CaveData generation stays on the main
+## thread; only scene-safe painting is spread across frames.
+func build_chunk_async(
+	chunk_coord: Vector2i,
+	world_seed: int,
+	mutation_record: Dictionary = {},
+	should_continue: Callable = Callable(),
+	cached_data: CaveData = null
+) -> CaveData:
+	var total_start := Time.get_ticks_usec()
+	var data: CaveData = cached_data
+	if data == null:
+		data = CaveGenerator.generate_chunk(config, chunk_coord, world_seed)
 	var world_offset := _chunk_world_offset(chunk_coord)
+	var generation_done := Time.get_ticks_usec()
 	await get_tree().process_frame
-	_paint_ground_pass(data, world_offset, mutation_record)
+	if _load_cancelled(should_continue):
+		clear_chunk(chunk_coord, data)
+		return null
+	var ground_start := Time.get_ticks_usec()
+	await _paint_ground_pass_async(data, world_offset, mutation_record)
+	var ground_done := Time.get_ticks_usec()
 	await get_tree().process_frame
-	var wall_cells := _paint_wall_and_base_pass(data, world_offset, mutation_record)
+	if _load_cancelled(should_continue):
+		clear_chunk(chunk_coord, data)
+		return null
+	var wall_start := Time.get_ticks_usec()
+	var wall_cells := await _paint_wall_and_base_pass_async(data, world_offset, mutation_record)
+	var wall_done := Time.get_ticks_usec()
 	await get_tree().process_frame
-	_paint_ore_overlay_pass(data, world_offset, wall_cells)
+	if _load_cancelled(should_continue):
+		clear_chunk(chunk_coord, data)
+		return null
+	var ore_start := Time.get_ticks_usec()
+	await _paint_ore_overlay_pass_async(data, world_offset, wall_cells)
+	var ore_done := Time.get_ticks_usec()
 	await get_tree().process_frame
-	_paint_liquids_pass(data, world_offset)
+	if _load_cancelled(should_continue):
+		clear_chunk(chunk_coord, data)
+		return null
+	var liquid_start := Time.get_ticks_usec()
+	await _paint_liquids_pass_async(data, world_offset)
+	var liquid_done := Time.get_ticks_usec()
 	await get_tree().process_frame
+	if _load_cancelled(should_continue):
+		clear_chunk(chunk_coord, data)
+		return null
+	var node_start := Time.get_ticks_usec()
 	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}), true)
+	var node_done := Time.get_ticks_usec()
+	var boundary_start := Time.get_ticks_usec()
 	_refresh_chunk_boundary(chunk_coord)
+	if DebugSettings.profile_cave_generation:
+		print("CaveChunkProfile phase=complete chunk=(%d,%d) generation_ms=%.1f ground_ms=%.1f wall_ms=%.1f ore_ms=%.1f liquids_ms=%.1f nodes_ms=%.1f boundary_ms=%.1f total_ms=%.1f" % [
+			chunk_coord.x, chunk_coord.y, (generation_done - total_start) / 1000.0,
+			(ground_done - generation_done) / 1000.0, (wall_done - wall_start) / 1000.0,
+			(ore_done - ore_start) / 1000.0, (liquid_done - liquid_start) / 1000.0,
+			(node_done - node_start) / 1000.0, _elapsed_ms(boundary_start), _elapsed_ms(total_start),
+		])
 	return data
 
 
@@ -168,18 +266,28 @@ func clear_chunk(chunk_coord: Vector2i, data: CaveData) -> Dictionary:
 	# above) -- see CaveOreOverlayLayer._apply_cell().
 	ore_overlay_layer.resync()
 
-	var ore_node_records := {}
+	var ore_node_records := get_chunk_ore_node_records(chunk_coord)
 	for instance in _chunk_object_instances.get(chunk_coord, []):
 		if not is_instance_valid(instance):
 			continue
-		if instance.has_method("get_save_data"):
-			var world_cell: Vector2i = objects_layer.local_to_map(instance.position)
-			ore_node_records["%d,%d" % [world_cell.x, world_cell.y]] = instance.get_save_data()
 		instance.queue_free()
 	_chunk_object_instances.erase(chunk_coord)
 
 	_refresh_chunk_boundary(chunk_coord)
 	return ore_node_records
+
+
+## Captures live ore-node state without removing the instances. SaveManager
+## can call this while a chunk is still loaded, so mining/damage remains
+## persistent even when the player saves before crossing the unload radius.
+func get_chunk_ore_node_records(chunk_coord: Vector2i) -> Dictionary:
+	var records := {}
+	for instance in _chunk_object_instances.get(chunk_coord, []):
+		if not is_instance_valid(instance) or not instance.has_method("get_save_data"):
+			continue
+		var world_cell: Vector2i = objects_layer.local_to_map(instance.position)
+		records["%d,%d" % [world_cell.x, world_cell.y]] = instance.get_save_data()
+	return records
 
 
 func _chunk_world_offset(chunk_coord: Vector2i) -> Vector2i:
@@ -209,12 +317,15 @@ static func _elapsed_ms(start_usec: int) -> float:
 func _refresh_chunk_boundary(chunk_coord: Vector2i) -> void:
 	var chunk_size := Vector2i(config.map_width, config.map_height)
 	var world_offset := _chunk_world_offset(chunk_coord)
-	var strips: Array[Rect2i] = [
-		Rect2i(world_offset.x, world_offset.y - 1, chunk_size.x, 2), # top edge
-		Rect2i(world_offset.x, world_offset.y + chunk_size.y - 1, chunk_size.x, 2), # bottom edge
-		Rect2i(world_offset.x - 1, world_offset.y, 2, chunk_size.y), # left edge
-		Rect2i(world_offset.x + chunk_size.x - 1, world_offset.y, 2, chunk_size.y), # right edge
-	]
+	var strips: Array[Rect2i] = []
+	if _edge_has_wall(world_offset, Vector2i(0, -1), chunk_size.x):
+		strips.append(Rect2i(world_offset.x, world_offset.y - 1, chunk_size.x, 2))
+	if _edge_has_wall(world_offset + Vector2i(0, chunk_size.y - 1), Vector2i(0, 1), chunk_size.x):
+		strips.append(Rect2i(world_offset.x, world_offset.y + chunk_size.y - 1, chunk_size.x, 2))
+	if _edge_has_wall(world_offset, Vector2i(-1, 0), chunk_size.y, false):
+		strips.append(Rect2i(world_offset.x - 1, world_offset.y, 2, chunk_size.y))
+	if _edge_has_wall(world_offset + Vector2i(chunk_size.x - 1, 0), Vector2i(1, 0), chunk_size.y, false):
+		strips.append(Rect2i(world_offset.x + chunk_size.x - 1, world_offset.y, 2, chunk_size.y))
 
 	var boundary_wall_cells: Dictionary = {}
 	for strip in strips:
@@ -227,17 +338,50 @@ func _refresh_chunk_boundary(chunk_coord: Vector2i) -> void:
 	if boundary_wall_cells.is_empty():
 		return
 	var cells: Array[Vector2i] = Array(boundary_wall_cells.keys(), TYPE_VECTOR2I, "", null)
-	# erase first -- set_cells_terrain_connect() only recomputes a cell's
-	# shape when it's newly transitioning onto the terrain, a no-op on cells
-	# that already have it assigned (same reasoning as
-	# CaveWallsLayer._refresh_wall_terrain_around()).
-	for cell in cells:
-		walls_layer.erase_cell(cell)
-	walls_layer.set_cells_terrain_connect(cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
-	var base_tiles := CaveWallBase.compute_base_tiles(boundary_wall_cells)
-	for cell: Vector2i in base_tiles:
-		walls_layer.set_cell(cell, CaveWallsLayer.TILESET_SOURCE_ID, base_tiles[cell])
-	ore_overlay_layer.resync()
+	if not walls_layer.refresh_wall_cells_direct(cells):
+		# Erase first -- terrain_connect is otherwise a no-op for an already
+		# painted cell and would leave a stale seam shape.
+		for cell in cells:
+			walls_layer.erase_cell(cell)
+		walls_layer.set_cells_terrain_connect(cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
+	# Base caps are decorative atlas tiles rather than terrain-connected tiles,
+	# so derive their shape from the complete live layer. The old
+	# boundary_wall_cells-only lookup missed horizontal neighbors on the
+	# left/right strips and left the south edge with a stale cap when a
+	# neighboring chunk loaded or unloaded.
+	var candidate_base_cells := {}
+	var base_tiles := {}
+	for wall_cell: Vector2i in boundary_wall_cells:
+		var base_cell := wall_cell + Vector2i.DOWN
+		candidate_base_cells[base_cell] = true
+		if walls_layer.is_wall_cell(base_cell):
+			continue
+		var has_left := walls_layer.is_wall_cell(wall_cell + Vector2i.LEFT)
+		var has_right := walls_layer.is_wall_cell(wall_cell + Vector2i.RIGHT)
+		if has_left and has_right:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_MIDDLE
+		elif has_right:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_LEFT_EDGE
+		elif has_left:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_RIGHT_EDGE
+		else:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_ISOLATED
+	for base_cell: Vector2i in candidate_base_cells:
+		if base_tiles.has(base_cell):
+			continue
+		if walls_layer.is_base_cell(base_cell):
+			walls_layer.erase_cell(base_cell)
+	walls_layer.set_base_tiles_direct(base_tiles, false)
+	var boundary_cells: Array[Vector2i] = Array(boundary_wall_cells.keys(), TYPE_VECTOR2I, "", null)
+	ore_overlay_layer.resync_around(boundary_cells)
+
+
+func _edge_has_wall(edge_start: Vector2i, outside_step: Vector2i, length: int, horizontal: bool = true) -> bool:
+	for index in range(length):
+		var edge_cell := edge_start + (Vector2i(index, 0) if horizontal else Vector2i(0, index))
+		if walls_layer.is_wall_cell(edge_cell + outside_step):
+			return true
+	return false
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +433,25 @@ func _paint_ground_pass(data: CaveData, world_offset: Vector2i, mutation_record:
 		ground_layer.set_cells_terrain_connect(to_dig, CaveGroundLayer.TERRAIN_SET, CaveGroundLayer.DUG_TERRAIN)
 
 
+func _paint_ground_pass_async(data: CaveData, world_offset: Vector2i, mutation_record: Dictionary) -> void:
+	var dug_cells := _world_cell_set(mutation_record.get("dug_ground_cells", []))
+	var to_dig: Array[Vector2i] = []
+	var painted := 0
+	for y in range(data.height):
+		for x in range(data.width):
+			var world_cell := world_offset + Vector2i(x, y)
+			if dug_cells.has(world_cell):
+				to_dig.append(world_cell)
+			else:
+				ground_layer.set_cell(world_cell, PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS)
+			painted += 1
+			if painted >= maxi(1, async_paint_cells_per_frame):
+				painted = 0
+				await get_tree().process_frame
+	if not to_dig.is_empty():
+		ground_layer.set_cells_terrain_connect(to_dig, CaveGroundLayer.TERRAIN_SET, CaveGroundLayer.DUG_TERRAIN)
+
+
 ## Wall pass (one batched terrain-connect call -- see class doc for why it's
 ## never split) + base cap pass. removed_wall_cells in mutation_record (world
 ## cells) are excluded entirely, so a previously-mined cell paints as open
@@ -301,14 +464,15 @@ func _paint_wall_and_base_pass(data: CaveData, world_offset: Vector2i, mutation_
 		if not removed.has(cell):
 			wall_cells.append(cell)
 
-	walls_layer.set_cells_terrain_connect(wall_cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
+	if not walls_layer.set_wall_cells_direct(wall_cells, wall_cells):
+		walls_layer.set_cells_terrain_connect(wall_cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
 
 	# CaveWallsLayer's own `changed`-signal auto-sync isn't guaranteed
 	# synchronous -- call compute_base_tiles() explicitly so the result is
 	# correct the instant this function returns.
 	var base_tiles := CaveWallBase.compute_base_tiles(wall_cells)
+	walls_layer.set_base_tiles_direct(base_tiles, false)
 	for cell: Vector2i in base_tiles:
-		walls_layer.set_cell(cell, CaveWallsLayer.TILESET_SOURCE_ID, base_tiles[cell])
 		# Base cap cells sit one row below their wall cell, which can fall
 		# just past this chunk's own bottom edge (a wall cell at the last
 		# row has no listed wall below it, so it still gets a cap) -- the
@@ -318,9 +482,42 @@ func _paint_wall_and_base_pass(data: CaveData, world_offset: Vector2i, mutation_
 	return wall_cells
 
 
+func _paint_wall_and_base_pass_async(
+	data: CaveData, world_offset: Vector2i, mutation_record: Dictionary = {}
+) -> Array[Vector2i]:
+	var removed := _world_cell_set(mutation_record.get("removed_wall_cells", []))
+	var wall_cells: Array[Vector2i] = []
+	for cell in _wall_cells_for(data, world_offset):
+		if not removed.has(cell):
+			wall_cells.append(cell)
+
+	if walls_layer.has_direct_wall_lookup():
+		var batch: Array[Vector2i] = []
+		var painted := 0
+		for cell in wall_cells:
+			batch.append(cell)
+			painted += 1
+			if painted >= maxi(1, async_paint_cells_per_frame):
+				walls_layer.set_wall_cells_direct(batch, wall_cells)
+				batch.clear()
+				painted = 0
+				await get_tree().process_frame
+		if not batch.is_empty():
+			walls_layer.set_wall_cells_direct(batch, wall_cells)
+	else:
+		walls_layer.set_cells_terrain_connect(wall_cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
+
+	var base_tiles := CaveWallBase.compute_base_tiles(wall_cells)
+	for cell: Vector2i in base_tiles:
+		walls_layer.set_cell(cell, CaveWallsLayer.TILESET_SOURCE_ID, base_tiles[cell])
+		if ground_layer.get_cell_source_id(cell) == -1:
+			ground_layer.set_cell(cell, PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS)
+	return wall_cells
+
+
 ## Must run after the wall pass, since mark_ore_cell() checks is_wall_cell().
 func _paint_ore_overlay_pass(data: CaveData, world_offset: Vector2i, wall_cells: Array[Vector2i]) -> void:
-	var ore_types_by_tile := _build_ore_type_lookup()
+	var ore_types_by_tile := _ore_types_by_tile
 	if ore_types_by_tile.is_empty():
 		return
 	var wall_cell_set := {}
@@ -337,11 +534,43 @@ func _paint_ore_overlay_pass(data: CaveData, world_offset: Vector2i, wall_cells:
 				ore_overlay_layer.mark_ore_cell(world_cell, ore_types_by_tile[tile_type])
 
 
+func _paint_ore_overlay_pass_async(data: CaveData, world_offset: Vector2i, wall_cells: Array[Vector2i]) -> void:
+	var ore_types_by_tile := _ore_types_by_tile
+	if ore_types_by_tile.is_empty():
+		return
+	var wall_cell_set := {}
+	for cell in wall_cells:
+		wall_cell_set[cell] = true
+	var painted := 0
+	for y in range(data.height):
+		for x in range(data.width):
+			var local_cell := Vector2i(x, y)
+			var tile_type := data.get_tile(local_cell)
+			if ore_types_by_tile.has(tile_type):
+				var world_cell := world_offset + local_cell
+				if wall_cell_set.has(world_cell):
+					ore_overlay_layer.mark_ore_cell(world_cell, ore_types_by_tile[tile_type])
+			painted += 1
+			if painted >= maxi(1, async_paint_cells_per_frame):
+				painted = 0
+				await get_tree().process_frame
+
+
 ## Lava is deliberately not painted here (see class doc) -- no tile art
 ## exists for it yet.
 func _paint_liquids_pass(data: CaveData, world_offset: Vector2i) -> void:
 	for cell in _water_cells_for(data, world_offset):
 		liquids_layer.set_cell(cell, WATER_SOURCE_ID, WATER_ATLAS_COORDS)
+
+
+func _paint_liquids_pass_async(data: CaveData, world_offset: Vector2i) -> void:
+	var painted := 0
+	for cell in _water_cells_for(data, world_offset):
+		liquids_layer.set_cell(cell, WATER_SOURCE_ID, WATER_ATLAS_COORDS)
+		painted += 1
+		if painted >= maxi(1, async_paint_cells_per_frame):
+			painted = 0
+			await get_tree().process_frame
 
 
 ## Mirrors OreNodeGenerator._spawn_node()'s scene-instancing exactly; only
@@ -378,6 +607,10 @@ func _build_ore_type_lookup() -> Dictionary:
 			continue
 		lookup[CaveOreVeinConfig.slot_to_tile_type(vein_config.ore_slot)] = vein_config.ore_type
 	return lookup
+
+
+func _load_cancelled(should_continue: Callable) -> bool:
+	return should_continue.is_valid() and not should_continue.call()
 
 
 func _world_cell_set(entries: Array) -> Dictionary:

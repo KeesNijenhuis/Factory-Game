@@ -39,6 +39,17 @@ func snap_to_target() -> void:
 		global_position = target.global_position
 
 
+func show_world_rect(world_rect: Rect2, padding: float = 0.9) -> void:
+	target = null
+	smoothing_enabled = false
+	global_position = world_rect.get_center()
+	var viewport_size := get_viewport_rect().size
+	if world_rect.size.x <= 0.0 or world_rect.size.y <= 0.0:
+		return
+	var fit_zoom := minf(viewport_size.x / world_rect.size.x, viewport_size.y / world_rect.size.y) * padding
+	zoom = Vector2.ONE * maxf(0.01, fit_zoom)
+
+
 func _follow_camera_target(delta : float) -> void:
 	if not target:
 		return

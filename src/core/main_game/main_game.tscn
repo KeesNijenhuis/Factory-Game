@@ -7,10 +7,10 @@
 [ext_resource type="PackedScene" uid="uid://ce0sk75v6qlrq" path="res://src/ui/hotbar/hotbar.tscn" id="3_tk58t"]
 [ext_resource type="PackedScene" uid="uid://beety0eo2irp4" path="res://src/ui/debug/debug_fps_text.tscn" id="5_tk58t"]
 [ext_resource type="PackedScene" uid="uid://d2nlhxj12wp7p" path="res://src/ui/inventory/inventory_panel.tscn" id="6_chest_panel"]
+[ext_resource type="PackedScene" path="res://src/ui/inventory/workbenches/blast_furnace_panel.tscn" id="7_bfpanel"]
 [ext_resource type="PackedScene" path="res://src/ui/inventory/workbenches/crafting_bench_panel.tscn" id="7_cbench"]
 [ext_resource type="PackedScene" path="res://src/ui/skills/skills_panel.tscn" id="7_skills_panel"]
 [ext_resource type="PackedScene" uid="uid://crw4kbwxbp06c" path="res://src/ui/inventory/workbenches/furnace_panel.tscn" id="7_tc86p"]
-[ext_resource type="PackedScene" path="res://src/ui/inventory/workbenches/blast_furnace_panel.tscn" id="7_bfpanel"]
 [ext_resource type="PackedScene" uid="uid://sk6dywl3jsil" path="res://src/ui/save_load/save_load_panel.tscn" id="8_rqvdb"]
 [ext_resource type="Script" uid="uid://bjmsbtuqj8gt0" path="res://src/ui/transition/screen_transition.gd" id="9_screentrans"]
 [ext_resource type="PackedScene" path="res://src/ui/debug/debug_menu.tscn" id="10_debugmenu"]
@@ -18,6 +18,7 @@
 
 [node name="MainGame" type="Node" unique_id=1787262438]
 script = ExtResource("1_3fed5")
+show_initial_chunk_grid_debug_view = true
 
 [node name="Systems" type="Node" parent="." unique_id=1023838794]
 script = ExtResource("2_ibp4d")
@@ -101,7 +102,7 @@ grow_horizontal = 1
 mouse_filter = 2
 toggle_with_inventory_key = false
 
-[node name="BlastFurnacePanel" parent="HudLayer/HudRoot" unique_id=2200000101 instance=ExtResource("7_bfpanel")]
+[node name="BlastFurnacePanel" parent="HudLayer/HudRoot" unique_id=-2094967195 instance=ExtResource("7_bfpanel")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -198,11 +199,6 @@ layout_mode = 1
 
 [node name="ItemSpawnMenu" parent="DebugLayer/DebugRoot" unique_id=1907308588 instance=ExtResource("11_itemspawn")]
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 0.0
 offset_top = -220.0
 offset_right = 240.0
 offset_bottom = 220.0
-grow_vertical = 2
