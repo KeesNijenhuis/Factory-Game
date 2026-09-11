@@ -85,7 +85,7 @@ func _ready() -> void:
 	# CaveBuilder can never end up painting with a different chunk size than
 	# the streamer is doing coordinate math against.
 	cave_builder.set_generation_config(streaming_config.chunk_config)
-	_world_seed = streaming_config.seed if streaming_config.seed != 0 else randi()
+	_world_seed = streaming_config.world_seed if streaming_config.world_seed != 0 else randi()
 	prepare_startup_world_data(SaveManager.consume_startup_world_data())
 	_cache_namespace = _build_cache_namespace()
 	if show_chunk_load_debug_overlay:

@@ -11,7 +11,7 @@ class_name CaveWorldStreamingConfig
 ## World seed. 0 = randomize once at level start. chunk_config.seed is
 ## unused for chunked generation -- only chunk_coord + this seed matter (see
 ## CaveGenerator.generate_chunk()).
-@export var seed: int = 0
+@export var world_seed: int = 0
 
 @export_group("Streaming")
 ## Chebyshev-radius, in chunks, built synchronously at level load -- the

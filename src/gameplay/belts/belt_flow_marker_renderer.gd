@@ -27,11 +27,11 @@ func rebuild(belts: Array[BeltComponent]) -> void:
 		var texture: Texture2D = belt.visual_set.marker_texture
 		if not buckets.has(texture):
 			buckets[texture] = []
-		var rotation := belt.get_marker_world_direction_for().angle()
+		var marker_rotation := belt.get_marker_world_direction_for().angle()
 		for progress in belt.flow_markers:
 			buckets[texture].append({
 				"position": belt.get_marker_world_position_for(progress),
-				"rotation": rotation,
+				"rotation": marker_rotation,
 			})
 
 	for texture in buckets:

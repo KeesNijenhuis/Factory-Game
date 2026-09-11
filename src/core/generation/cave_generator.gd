@@ -103,7 +103,9 @@ static func _generate_world_space_chunk(config: CaveGenerationConfig, chunk_coor
 static func _world_room_descriptor(config: CaveGenerationConfig, world_seed: int, lattice: Vector2i, spacing: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _world_hash(world_seed, lattice.x, lattice.y, 101)
+	@warning_ignore("integer_division")
 	var jitter := maxi(1, spacing / 5)
+	@warning_ignore("integer_division")
 	var center := lattice * spacing + Vector2i(
 		spacing / 2 + rng.randi_range(-jitter, jitter),
 		spacing / 2 + rng.randi_range(-jitter, jitter)
@@ -152,6 +154,7 @@ static func _set_world_entrance(data: CaveData, origin: Vector2i) -> void:
 	# The origin chunk is the player's permanent starting area. Keep its
 	# entrance near world cell (0, 0); other chunks retain a local center
 	# anchor for debug/streaming metadata.
+	@warning_ignore("integer_division")
 	var target := Vector2i.ONE if origin == Vector2i.ZERO else origin + Vector2i(data.width / 2, data.height / 2)
 	for y in range(data.height):
 		for x in range(data.width):
@@ -163,6 +166,7 @@ static func _set_world_entrance(data: CaveData, origin: Vector2i) -> void:
 				best_distance = distance
 				best = cell
 	if best_distance == INF:
+		@warning_ignore("integer_division")
 		best = Vector2i.ONE if origin == Vector2i.ZERO else Vector2i(data.width / 2, data.height / 2)
 		data.set_tile(best, CaveData.TileType.FLOOR)
 	data.entrance_position = best

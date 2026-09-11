@@ -200,7 +200,7 @@ func _maybe_turn_dead_end_belt(neighbor: BeltComponent, target_belt: BeltCompone
 
 ## O(1) lookup -- safe to call every frame (PlacementController's ghost does,
 ## for auto-orient).
-func get_belt_at(objects_layer: TileMapLayer, cell: Vector2i) -> BeltComponent:
+func get_belt_at(_objects_layer: TileMapLayer, cell: Vector2i) -> BeltComponent:
 	return _belts_by_cell.get(cell)
 
 ## Which edge a belt at cell, with the given output facing, would actually
