@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bs82x10pfh7a5"
+path="res://.godot/imported/grand_piano_mystery.wav-f2839adfe6851ad9d92f0e7a14fe108e.sample"
+
+[deps]
+
+source_file="res://assets/audio/Musical Effects/grand_piano_mystery.wav"
+dest_files=["res://.godot/imported/grand_piano_mystery.wav-f2839adfe6851ad9d92f0e7a14fe108e.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

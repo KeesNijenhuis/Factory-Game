@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://rgvldcm5juaj"
+path="res://.godot/imported/card_draw_2.wav-b3b5acbf95a366e63a0a4f9272d25506.sample"
+
+[deps]
+
+source_file="res://assets/audio/Card and Board/card_draw_2.wav"
+dest_files=["res://.godot/imported/card_draw_2.wav-b3b5acbf95a366e63a0a4f9272d25506.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

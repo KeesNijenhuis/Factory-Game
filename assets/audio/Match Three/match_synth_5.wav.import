@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://daknusvdp1k0b"
+path="res://.godot/imported/match_synth_5.wav-bf9a7281880a7b9f5ce90ef6e2c57e01.sample"
+
+[deps]
+
+source_file="res://assets/audio/Match Three/match_synth_5.wav"
+dest_files=["res://.godot/imported/match_synth_5.wav-bf9a7281880a7b9f5ce90ef6e2c57e01.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://c6k4phih7pn8s"
+path="res://.godot/imported/chips_gather_3.wav-43bfd10b3294df8e8e7ed20cde99f1b7.sample"
+
+[deps]
+
+source_file="res://assets/audio/Card and Board/chips_gather_3.wav"
+dest_files=["res://.godot/imported/chips_gather_3.wav-43bfd10b3294df8e8e7ed20cde99f1b7.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
