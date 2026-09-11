@@ -1,8 +1,6 @@
 extends Control
 class_name InventoryPanel
 
-@export_range(1, 12, 1) var rows: int = 6
-@export_range(1, 12, 1) var columns: int = 4
 @export_node_path("Node") var inventory_path: NodePath
 @export var toggle_with_inventory_key: bool = true
 @export var container_name: String = "Inventory"
@@ -44,6 +42,7 @@ func _ready() -> void:
 	inventory = get_node_or_null(inventory_path) if not inventory_path.is_empty() else get_node("/root/Inventory")
 	_connect_inventory()
 	_configure_slots()
+	_connect_slots()
 	_apply_role_colors()
 	grabbed_slot = INVENTORY_SLOT_SCENE.instantiate() as InventorySlot
 	_debug_transport_belt = load("res://src/resources/items/placeables/transport_belt.tres")
@@ -56,10 +55,6 @@ func _ready() -> void:
 	grabbed_slot.z_index = 10
 	grabbed_slot.visible = false
 	add_child(grabbed_slot)
-	for slot in slots:
-		slot.on_slot_hovered.connect(_show_item_name)
-		slot.on_slot_unhovered.connect(_hide_item_name)
-		slot.on_slot_clicked.connect(_on_slot_clicked)
 	_refresh_slots()
 	_hide_item_name(-1)
 
@@ -76,6 +71,8 @@ func open_for(storage: Node) -> void:
 			inventory.on_inventory_changed.disconnect(_refresh_slots)
 		inventory = storage
 		_connect_inventory()
+		_configure_slots()
+		_connect_slots()
 		_apply_role_colors()
 	_refresh_slots()
 	visible = true
@@ -102,17 +99,50 @@ func _connect_inventory() -> void:
 	if not inventory.on_inventory_changed.is_connected(_refresh_slots):
 		inventory.on_inventory_changed.connect(_refresh_slots)
 
+## How many grid slots this panel should render, and how many columns to lay
+## them out in. Default: the open Inventory's own size -- CraftingBenchPanel
+## overrides both, since CraftingBenchInventory bundles a non-grid output
+## slot into its item count (see CraftingBenchInventory.SLOT_COUNT) that
+## isn't part of this grid.
+func _grid_slot_count() -> int:
+	return inventory.items.size()
+
+func _grid_columns() -> int:
+	return inventory.columns
+
+## Sizes the slot grid to whatever Inventory is currently open rather than a
+## fixed count on this panel -- the same panel scene is reused across
+## different-sized inventories (e.g. the shared chest panel opens both a
+## wooden chest's and an iron chest's Inventory), so a count fixed here
+## instead of read from the open Inventory silently hides that Inventory's
+## extra slots: shift-click quick-transfer still finds room in them and
+## drops items there, but nothing on screen ever shows they arrived. Re-run
+## via open_for() whenever the open Inventory changes, so it's written to be
+## safe to call more than once.
 func _configure_slots() -> void:
-	container.columns = columns
+	slots.clear()
+	container.columns = _grid_columns()
 	for child in container.get_children():
 		if child is InventorySlot:
 			slots.append(child as InventorySlot)
-	while slots.size() > rows * columns:
+	var target_slot_count: int = _grid_slot_count()
+	while slots.size() > target_slot_count:
 		slots.pop_back().queue_free()
-	while slots.size() < rows * columns:
+	while slots.size() < target_slot_count:
 		var slot := INVENTORY_SLOT_SCENE.instantiate() as InventorySlot
 		container.add_child(slot)
 		slots.append(slot)
+
+## Connects every slot currently in `slots` -- called after _configure_slots()
+## (and any subclass additions to `slots`, e.g. CraftingBenchPanel's
+## output_slot) has finished. Safe to call more than once: already-connected
+## slots are skipped.
+func _connect_slots() -> void:
+	for slot in slots:
+		if not slot.on_slot_clicked.is_connected(_on_slot_clicked):
+			slot.on_slot_hovered.connect(_show_item_name)
+			slot.on_slot_unhovered.connect(_hide_item_name)
+			slot.on_slot_clicked.connect(_on_slot_clicked)
 
 ## Tints each of this container's colored-input slots (see
 ## Inventory.get_colored_input_slots) to match its port's world-space arrow

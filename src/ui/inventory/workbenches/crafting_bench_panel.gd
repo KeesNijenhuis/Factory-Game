@@ -18,13 +18,23 @@ func close_inventory() -> void:
 	crafting_bench = null
 	super.close_inventory()
 
+## CraftingBenchInventory.items includes OUTPUT_SLOT on top of the 3x3 grid
+## (see CraftingBenchInventory.SLOT_COUNT), so the grid itself is only
+## GRID_SIZE slots, laid out GRID_COLUMNS wide.
+func _grid_slot_count() -> int:
+	return CraftingBenchInventory.GRID_SIZE
+
+func _grid_columns() -> int:
+	return CraftingBenchInventory.GRID_COLUMNS
+
 ## The base class only wires up slots found under %Container (the shaped 3x3
 ## grid); the output slot lives outside that container so it can be laid out
 ## separately, so it's appended here to line up with CraftingBenchInventory's
 ## OUTPUT_SLOT index (immediately after the grid's GRID_SIZE slots).
 func _configure_slots() -> void:
 	super._configure_slots()
-	slots.append(output_slot)
+	if not slots.has(output_slot):
+		slots.append(output_slot)
 
 ## The output slot never holds real stock to click/drag with the base
 ## machinery (CraftingBenchInventory refuses to give it up through any of

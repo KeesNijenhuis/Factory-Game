@@ -83,7 +83,6 @@ offset_left = 150.0
 offset_right = 150.0
 grow_horizontal = 1
 mouse_filter = 2
-rows = 3
 toggle_with_inventory_key = false
 container_name = "Chest"
 
