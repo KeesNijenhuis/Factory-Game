@@ -254,9 +254,37 @@ func _show_denied_indicator_on_marker() -> void:
 		add_child(indicator)
 		indicator.global_position = direction_marker.global_position
 
+## Where a dropped/thrown item should land: normally the facing marker for
+## last_direction, but if that spot is inside a standing cave wall (e.g. the
+## player is pressed up against one), tries the other three facings in turn
+## and uses the first one that isn't, so items never get dropped somewhere
+## the player can't walk over to retrieve them.
 func get_drop_position() -> Vector2:
-	var direction_marker: Marker2D = attack_positions.get(last_direction)
-	return direction_marker.global_position if direction_marker else global_position
+	var walls_layer := _get_cave_walls_layer()
+	for direction in _drop_direction_order():
+		var direction_marker: Marker2D = attack_positions.get(direction)
+		if direction_marker == null:
+			continue
+		if walls_layer == null or not _is_position_in_wall(walls_layer, direction_marker.global_position):
+			return direction_marker.global_position
+	var fallback_marker: Marker2D = attack_positions.get(last_direction)
+	return fallback_marker.global_position if fallback_marker else global_position
+
+## last_direction first, then the remaining facings in a fixed order.
+func _drop_direction_order() -> Array[String]:
+	var directions: Array[String] = ["down", "up", "left", "right"]
+	directions.erase(last_direction)
+	directions.push_front(last_direction)
+	return directions
+
+func _get_cave_walls_layer() -> CaveWallsLayer:
+	var main_game := get_tree().current_scene as MainGame
+	var level := main_game.get_current_level() if main_game else null
+	return level.get_walls_layer() as CaveWallsLayer if level else null
+
+func _is_position_in_wall(walls_layer: CaveWallsLayer, world_position: Vector2) -> bool:
+	var cell := walls_layer.local_to_map(walls_layer.to_local(world_position))
+	return walls_layer.is_wall_cell(cell)
 
 	
 const HOLDABLE_ANIMATIONS := ["idle", "walk", "sprint"]

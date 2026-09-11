@@ -2,7 +2,7 @@ extends Area2D
 class_name GroundItem
 
 const SCENE: PackedScene = preload("res://src/gameplay/inventory/ground_item.tscn")
-const DROPPED_ITEM_PICKUP_DELAY := 5.0
+const DROPPED_ITEM_PICKUP_DELAY := 2.0
 
 @export var item: Item
 @export var quantity: int = 1
