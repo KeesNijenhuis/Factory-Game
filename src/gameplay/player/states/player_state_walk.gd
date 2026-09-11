@@ -14,37 +14,9 @@ func process_state(_delta: float) -> void:
 		fsm.transition_to("Dash")
 		return
 
-	if Input.is_action_pressed("tool_target_click") and not player.interaction_consumed and not player.is_mouse_over_inventory_panel():
-		# Tool interactions replace movement for this frame and enter an animation state.
-		if player.current_tool_type == Item.ToolTypes.Sword:
-			fsm.transition_to("Attack")
-			return
-		elif player.current_tool_type == Item.ToolTypes.Pickaxe:
-			var ic := player.interaction_controller
-			if not ic.has_wall_target() and not ic.has_object_target_for(Item.ToolTypes.Pickaxe):
-				return
-			if not player.skills_manager.check_tool_requirement(player.current_tool_item):
-				player.interaction_consumed = true
-				player.show_tool_denied_indicator()
-				return
-			# A wall target might be occluded by a nearer wall -- try_mine()
-			# still turns the player to face it, it just doesn't swing.
-			if ic.has_wall_target() and not ic.try_mine():
-				return
-			fsm.transition_to("Mining")
-			return
-		elif player.current_tool_type == Item.ToolTypes.Axe:
-			if not player.interaction_controller.has_object_target_for(Item.ToolTypes.Axe):
-				return
-			if not player.skills_manager.check_tool_requirement(player.current_tool_item):
-				player.interaction_consumed = true
-				player.show_tool_denied_indicator()
-				return
-			fsm.transition_to("Woodcutting")
-			return
-		else:
-			return
-	
+	if try_start_tool_action():
+		return
+
 	if input_vector == Vector2.ZERO:
 		fsm.transition_to("Idle")
 		return
