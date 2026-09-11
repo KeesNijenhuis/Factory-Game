@@ -2,6 +2,7 @@ extends Control
 class_name Hotbar
 
 const SLOT_COUNT := 8
+const INVENTORY_SLOT_SCENE: PackedScene = preload("res://src/ui/inventory/inventory_slot.tscn")
 
 @onready var inventory: Node = $Inventory
 @onready var slot_container: HBoxContainer = $MarginContainer/TextureRect/MarginContainer/HBoxContainer
@@ -15,6 +16,7 @@ var selected_textures: Array[Texture2D] = []
 var selected_slot: int = 0
 var suppress_next_key_selection: bool = false
 var hovered_slot_index: int = -1
+var grabbed_slot: InventorySlot
 
 var _hotbar_actions: Array[StringName] = []
 
@@ -36,6 +38,14 @@ func _ready() -> void:
 			inventory_slot.on_slot_unhovered.connect(_hide_item_name)
 			slots.append(slot)
 	inventory.on_inventory_changed.connect(_refresh_slots)
+	grabbed_slot = INVENTORY_SLOT_SCENE.instantiate() as InventorySlot
+	grabbed_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	grabbed_slot.disabled = true
+	grabbed_slot.texture_normal = null
+	grabbed_slot.texture_hover = null
+	grabbed_slot.z_index = 10
+	grabbed_slot.visible = false
+	add_child(grabbed_slot)
 	_refresh_slots()
 	_select_slot(selected_slot)
 
@@ -46,6 +56,8 @@ func _process(_delta: float) -> void:
 		for index in SLOT_COUNT:
 			if Input.is_action_just_pressed(_hotbar_actions[index]):
 				_select_slot(index)
+	if hud.held_item and hud.held_source == self:
+		grabbed_slot.global_position = get_global_mouse_position()
 	if hovered_slot_index >= 0:
 		_position_item_name_label()
 	_update_item_name_visibility()
@@ -91,6 +103,13 @@ func _on_slot_pressed(slot_index: int) -> void:
 	if Input.is_key_pressed(KEY_SHIFT) and _move_stack_to_inventory(slot_index):
 		_restore_selection_visuals()
 		return
+	var taken: Array = inventory.take_item(slot_index)
+	if not taken.is_empty():
+		hud.held_item = taken[0]
+		hud.held_quantity = taken[1]
+		hud.held_durability = taken[2] if taken.size() > 2 else 0
+		hud.held_source = self as Node
+		_update_grabbed_slot()
 	_restore_selection_visuals()
 
 func _on_slot_gui_input(event: InputEvent, slot_index: int) -> void:
@@ -102,7 +121,7 @@ func _on_slot_gui_input(event: InputEvent, slot_index: int) -> void:
 		hud.held_quantity = split[1]
 		hud.held_durability = 0
 		hud.held_source = self as Node
-		_refresh_slots()
+		_update_grabbed_slot()
 		get_viewport().set_input_as_handled()
 
 func _move_stack_to_inventory(slot_index: int) -> bool:
@@ -127,18 +146,14 @@ func move_stack_from(source_panel: InventoryPanel, source_slot_index: int) -> bo
 	var item: Item = source_panel.inventory.items[source_slot_index]
 	if item == null:
 		return false
-	var target_slot := -1
-	for index in inventory.items.size():
-		if inventory.items[index] == null:
-			target_slot = index
-			break
-	if target_slot < 0:
-		return false
 	var quantity: int = source_panel.inventory.quantities[source_slot_index]
 	var durability: int = source_panel.inventory.durabilities[source_slot_index]
-	if inventory.place_item(target_slot, item, quantity, durability).size() > 0:
+	var moved_quantity: int = mini(quantity, inventory.get_item_capacity(item))
+	if moved_quantity <= 0:
 		return false
-	source_panel.inventory.remove_item(source_slot_index, quantity)
+	if not inventory.add_item(item, moved_quantity, durability):
+		return false
+	source_panel.inventory.remove_item(source_slot_index, moved_quantity)
 	_refresh_slots()
 	return true
 
@@ -220,8 +235,17 @@ func _place_held_item(slot_index: int) -> void:
 	if hud.held_item == null:
 		hud.held_source = null
 	if is_instance_valid(source) and source != self:
-		source._update_grabbed_slot()
+		source.call("_update_grabbed_slot")
+	_update_grabbed_slot()
 	_refresh_slots()
+
+func _update_grabbed_slot() -> void:
+	if hud.held_source == self and hud.held_item:
+		grabbed_slot.setup(-1, hud.held_item, hud.held_quantity, hud.held_durability)
+		grabbed_slot.visible = true
+	else:
+		grabbed_slot.visible = false
+	_update_item_name_visibility()
 
 func _select_slot(slot_index: int) -> void:
 	if slot_index < 0 or slot_index >= slots.size():
@@ -264,4 +288,5 @@ func drop_held_item() -> void:
 	hud.held_quantity = 0
 	hud.held_durability = 0
 	hud.held_source = null
+	_update_grabbed_slot()
 	_refresh_slots()
