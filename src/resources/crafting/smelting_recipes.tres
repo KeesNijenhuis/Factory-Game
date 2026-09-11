@@ -9,6 +9,8 @@
 [ext_resource type="Resource" uid="uid://d15hdyqcq7lmt" path="res://src/resources/items/ingots/iron_ingot.tres" id="6_88qax"]
 [ext_resource type="Resource" uid="uid://bukqxk0xrrmlk" path="res://src/resources/items/ores/gold_ore.tres" id="7_webim"]
 [ext_resource type="Resource" uid="uid://bodptfih3m2o4" path="res://src/resources/items/ingots/gold_ingot.tres" id="8_3b0v5"]
+[ext_resource type="Resource" uid="uid://cjqph8bgfu2d4" path="res://src/resources/items/ores/tin_ore.tres" id="9_88qax"]
+[ext_resource type="Resource" uid="uid://d1d4tl37351yu" path="res://src/resources/items/ingots/tin_ingot.tres" id="10_vbjy0"]
 
 [sub_resource type="Resource" id="Resource_mhds4"]
 script = ExtResource("1_chmqi")
@@ -35,6 +37,13 @@ output_items = Array[ExtResource("2_mhds4")]([ExtResource("8_3b0v5")])
 output_quantities = Array[int]([1])
 experience_gain = 10
 
+[sub_resource type="Resource" id="Resource_to6mv"]
+script = ExtResource("1_chmqi")
+input_items = Array[ExtResource("2_mhds4")]([ExtResource("9_88qax")])
+output_items = Array[ExtResource("2_mhds4")]([ExtResource("10_vbjy0")])
+output_quantities = Array[int]([1])
+skill_type = 4
+
 [resource]
 script = ExtResource("2_4of7a")
-recipes = Array[ExtResource("1_chmqi")]([SubResource("Resource_mhds4"), SubResource("Resource_webim"), SubResource("Resource_3b0v5")])
+recipes = Array[ExtResource("1_chmqi")]([SubResource("Resource_mhds4"), SubResource("Resource_webim"), SubResource("Resource_3b0v5"), SubResource("Resource_to6mv")])

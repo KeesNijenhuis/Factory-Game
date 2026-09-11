@@ -89,7 +89,7 @@ func _output_has_room(recipe: SmeltingRecipe) -> bool:
 	return current_quantity + output_quantity <= maxi(output_item.max_stack_size, 1)
 
 func _update_smelting(delta: float) -> void:
-	# Captured locally: remove_item() below (via _consume_input) emits
+	# Captured locally: remove_item() below (via _consume_inputs) emits
 	# on_inventory_changed, which reenters _on_inventory_changed() and can
 	# reassign current_recipe before this function is done using it.
 	var recipe := current_recipe
@@ -119,11 +119,7 @@ func _update_smelting(delta: float) -> void:
 
 	if recipe != null and smelt_progress >= recipe.craft_time:
 		smelt_progress -= recipe.craft_time
-		for i in recipe.input_items.size():
-			var needed_item: Item = recipe.input_items[i]
-			var needed_quantity: int = recipe.input_quantities[i] if i < recipe.input_quantities.size() else 1
-			if needed_item != null and needed_quantity > 0:
-				_consume_input(needed_item, needed_quantity)
+		_consume_inputs(recipe)
 		var output_quantity: int = recipe.output_quantities[0] if not recipe.output_quantities.is_empty() else 1
 		if inventory.items[BlastFurnaceInventory.OUTPUT_SLOT] == null:
 			inventory.items[BlastFurnaceInventory.OUTPUT_SLOT] = recipe.output_items[0]
@@ -139,20 +135,21 @@ func _update_smelting(delta: float) -> void:
 
 	state_changed.emit()
 
-## Removes quantity of item from wherever it's sitting across the two input
-## slots (it may be split across both, or entirely in one) -- matches_inputs()
-## only checks sufficiency across both slots combined, so consumption has to
-## scan the same way rather than assuming a fixed slot per ingredient.
-func _consume_input(item: Item, quantity: int) -> void:
-	var remaining := quantity
-	for slot_index in [BlastFurnaceInventory.INPUT_A_SLOT, BlastFurnaceInventory.INPUT_B_SLOT]:
-		if remaining <= 0:
-			return
-		if inventory.items[slot_index] != item:
-			continue
-		var take := mini(remaining, inventory.quantities[slot_index])
-		inventory.remove_item(slot_index, take)
-		remaining -= take
+## Removes each of the recipe's inputs from whichever input slot
+## get_input_slot_assignment() bound it to, so a recipe needing the same item
+## twice (e.g. 2x iron ingot for steel) takes one from each of the two slots
+## that satisfied it, rather than draining one slot twice.
+func _consume_inputs(recipe: SmeltingRecipe) -> void:
+	var input_slots := [BlastFurnaceInventory.INPUT_A_SLOT, BlastFurnaceInventory.INPUT_B_SLOT]
+	var input_items := [inventory.items[BlastFurnaceInventory.INPUT_A_SLOT], inventory.items[BlastFurnaceInventory.INPUT_B_SLOT]]
+	var input_quantities := [inventory.quantities[BlastFurnaceInventory.INPUT_A_SLOT], inventory.quantities[BlastFurnaceInventory.INPUT_B_SLOT]]
+	var assignment: Variant = recipe.get_input_slot_assignment(input_items, input_quantities)
+	if assignment == null:
+		return
+	for entry_index in assignment:
+		var slot_index: int = input_slots[assignment[entry_index]]
+		var needed_quantity: int = recipe.input_quantities[entry_index] if entry_index < recipe.input_quantities.size() else 1
+		inventory.remove_item(slot_index, needed_quantity)
 
 ## Pulls 1 fuel item from the slot immediately and grants it smelt_count *
 ## recipe.craft_time seconds of burn time. Returns false (and does nothing)

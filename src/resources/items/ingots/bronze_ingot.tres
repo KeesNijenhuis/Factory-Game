@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://dwctg1g35h10k"]
+
+[ext_resource type="Texture2D" uid="uid://ck4mbg1svc7b6" path="res://assets/art/world/items/Bars and ores.png" id="1_0kgal"]
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_p2wvw"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nuik6"]
+atlas = ExtResource("1_0kgal")
+region = Rect2(0, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_p2wvw")
+icon = SubResource("AtlasTexture_nuik6")
+name = "Bronze Ingot"
+item_id = "bronze_ingot"

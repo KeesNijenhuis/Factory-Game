@@ -3,13 +3,15 @@
 [ext_resource type="Script" uid="uid://cr784aqlaos12" path="res://src/resources/crafting/smelting_recipe.gd" id="1_chmqi"]
 [ext_resource type="Script" uid="uid://8emqlm74iw5w" path="res://src/resources/crafting/smelting_recipe_database.gd" id="2_4of7a"]
 [ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="2_mhds4"]
-[ext_resource type="Resource" uid="uid://qfynpiaxu182" path="res://src/resources/items/ores/iron_ore.tres" id="3_ironore"]
-[ext_resource type="Resource" uid="uid://dqafevngbqx40" path="res://src/resources/items/ores/copper_ore.tres" id="4_copperore"]
+[ext_resource type="Resource" uid="uid://d15hdyqcq7lmt" path="res://src/resources/items/ingots/iron_ingot.tres" id="3_2nnx6"]
 [ext_resource type="Resource" uid="uid://buu67vqcs7tk7" path="res://src/resources/items/ingots/steel_ingot.tres" id="5_steelingot"]
+[ext_resource type="Resource" uid="uid://cn6mgv327jw2f" path="res://src/resources/items/ingots/copper_ingot.tres" id="6_1n3w2"]
+[ext_resource type="Resource" uid="uid://d1d4tl37351yu" path="res://src/resources/items/ingots/tin_ingot.tres" id="7_5pgcj"]
+[ext_resource type="Resource" uid="uid://dwctg1g35h10k" path="res://src/resources/items/ingots/bronze_ingot.tres" id="8_j25kt"]
 
 [sub_resource type="Resource" id="Resource_bf_steel"]
 script = ExtResource("1_chmqi")
-input_items = Array[ExtResource("2_mhds4")]([ExtResource("3_ironore"), ExtResource("4_copperore")])
+input_items = Array[ExtResource("2_mhds4")]([ExtResource("3_2nnx6"), ExtResource("3_2nnx6")])
 input_quantities = Array[int]([1, 1])
 output_items = Array[ExtResource("2_mhds4")]([ExtResource("5_steelingot")])
 output_quantities = Array[int]([1])
@@ -18,6 +20,14 @@ experience_gain = 30
 level_requirement = 3
 craft_time = 6.0
 
+[sub_resource type="Resource" id="Resource_7doeh"]
+script = ExtResource("1_chmqi")
+input_items = Array[ExtResource("2_mhds4")]([ExtResource("6_1n3w2"), ExtResource("7_5pgcj")])
+input_quantities = Array[int]([1, 1])
+output_items = Array[ExtResource("2_mhds4")]([ExtResource("8_j25kt")])
+output_quantities = Array[int]([1])
+skill_type = 4
+
 [resource]
 script = ExtResource("2_4of7a")
-recipes = Array[ExtResource("1_chmqi")]([SubResource("Resource_bf_steel")])
+recipes = Array[ExtResource("1_chmqi")]([SubResource("Resource_bf_steel"), SubResource("Resource_7doeh")])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://d1d4tl37351yu"]
+
+[ext_resource type="Script" uid="uid://lu0mhyjxpg3s" path="res://src/resources/items/item.gd" id="1_30r70"]
+[ext_resource type="Texture2D" uid="uid://ck4mbg1svc7b6" path="res://assets/art/world/items/Bars and ores.png" id="1_pbdt3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ajvyu"]
+atlas = ExtResource("1_pbdt3")
+region = Rect2(32, 16, 16, 16)
+
+[resource]
+script = ExtResource("1_30r70")
+icon = SubResource("AtlasTexture_ajvyu")
+name = "Tin Ingot"
+item_id = "tin_ingot"
