@@ -61,8 +61,9 @@ func _try_transfer() -> void:
 func _find_matching_input(neighbor: Node, objects_layer: TileMapLayer, target_cell: Vector2i) -> ItemInputSlotComponent:
 	var components := AutomationUtils.get_slot_components(neighbor) as Array[ItemSlotComponent]
 
+	var required_facing: String = OPPOSITE_FACING[facing]
 	for component in components:
-		if component is ItemInputSlotComponent and component.enabled and component.get_owner_cell(objects_layer) == target_cell:
+		if component is ItemInputSlotComponent and component.enabled and component.facing == required_facing and component.get_owner_cell(objects_layer) == target_cell:
 			return component
 
 	return null

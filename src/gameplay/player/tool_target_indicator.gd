@@ -84,7 +84,11 @@ func _update_for_wrench_target() -> void:
 	var objects_layer := AutomationUtils.get_objects_layer(self)
 	if objects_layer == null:
 		return
-	var target := AutomationUtils.find_slot_target(objects_layer, get_global_mouse_position())
+	# Reads InteractionController's already-resolved target (computed once
+	# this frame in update(), before this indicator runs -- see its
+	# resolved_slot_target doc comment) instead of calling find_slot_target
+	# again here, same as _update_for_upgrade_target below.
+	var target := player.interaction_controller.resolved_slot_target
 	if target == null:
 		return
 	var player_cell := objects_layer.local_to_map(objects_layer.to_local(player.global_position))
@@ -101,7 +105,7 @@ func _update_for_upgrade_target(item: Item) -> void:
 	var objects_layer := AutomationUtils.get_objects_layer(self)
 	if objects_layer == null:
 		return
-	var target := AutomationUtils.find_slot_target(objects_layer, get_global_mouse_position())
+	var target := player.interaction_controller.resolved_slot_target
 	if target == null or AutomationUtils.find_upgradeable_component(target, item.upgrade_type) == null:
 		return
 	var player_cell := objects_layer.local_to_map(objects_layer.to_local(player.global_position))

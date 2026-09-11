@@ -45,6 +45,11 @@ extends Node2D
 ## neither depends on marker position or the raw tile-grid cell, so both stay
 ## correct however far the box (or the decorative arrows) get dragged.
 @onready var click_area: Area2D = get_node_or_null("ClickArea")
+## Cached once here rather than re-resolved via get_node_or_null on every
+## get_quadrant()/contains_point()/_click_origin() call -- those run every
+## frame from WrenchSlotIndicator/ToolTargetIndicator while the Wrench/an
+## Upgrade is equipped.
+@onready var _click_shape_node: CollisionShape2D = click_area.get_node_or_null("CollisionShape2D") as CollisionShape2D if click_area else null
 
 func _ready() -> void:
 	for marker: Node2D in _markers.values():
@@ -117,4 +122,4 @@ func _click_origin() -> Vector2:
 	return click_area.global_position if click_area else global_position
 
 func _click_shape() -> CollisionShape2D:
-	return click_area.get_node_or_null("CollisionShape2D") as CollisionShape2D if click_area else null
+	return _click_shape_node

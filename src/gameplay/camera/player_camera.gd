@@ -32,6 +32,9 @@ func _unhandled_input(event : InputEvent) -> void:
 func _process(delta : float) -> void:
 	_follow_camera_target(delta)
 
+	if Input.is_action_just_pressed(&"debug_snap_camera_to_player"):
+		snap_to_target()
+
 
 ## Instantly moves the camera onto its target, bypassing follow smoothing.
 func snap_to_target() -> void:
@@ -40,9 +43,9 @@ func snap_to_target() -> void:
 
 
 func show_world_rect(world_rect: Rect2, padding: float = 0.9) -> void:
-	target = null
+	#target = null
 	smoothing_enabled = false
-	global_position = world_rect.get_center()
+	global_position = target.global_position
 	var viewport_size := get_viewport_rect().size
 	if world_rect.size.x <= 0.0 or world_rect.size.y <= 0.0:
 		return

@@ -67,21 +67,72 @@ static func get_footprint_cells(anchor_cell: Vector2i, size: Vector2i) -> Array[
 			cells.append(anchor_cell + Vector2i(dx, dy))
 	return cells
 
-## O(children) scan -- no spatial index exists anywhere in this codebase yet;
-## acceptable at current scale. Tests whether cell falls anywhere within the
-## child's own footprint rect (see get_object_footprint), not just its exact
-## anchor cell, so a multi-tile object like BlastFurnace is found correctly
-## from any of the cells it occupies -- for every 1x1 object this is
-## identical to the old exact-equality check.
+## O(1) lookup via a lazily-built, self-maintaining spatial index (see
+## _ensure_index below) instead of scanning every child of objects_layer --
+## with hundreds of belt tiles/ore nodes placed, that scan (run 9x per
+## find_slot_target() call, every frame while the Wrench/an Upgrade is
+## equipped) was the actual cause of the framerate drop those tools caused.
+## Tests whether cell falls anywhere within the child's own footprint rect
+## (see get_object_footprint), not just its exact anchor cell, so a
+## multi-tile object like BlastFurnace is found correctly from any of the
+## cells it occupies -- for every 1x1 object this is identical to the old
+## exact-equality check.
 static func find_object_at_cell(objects_layer: TileMapLayer, cell: Vector2i) -> Node2D:
+	var index := _ensure_index(objects_layer)
+	return index.get(cell) as Node2D
+
+## Per-objects_layer cell index, keyed by the layer's own instance id so each
+## level's TileMapLayer gets its own independent index and multiple levels/
+## reloads never cross-contaminate. Each value is a Dictionary[Vector2i,
+## Node2D] mapping every cell a registered child's footprint covers to that
+## child -- built once per layer (see _ensure_index) and kept correct
+## incrementally afterward via the layer's own child_entered_tree/
+## child_exiting_tree signals, so no call site that adds or removes an
+## objects_layer child needs to know this index exists.
+static var _cell_indexes: Dictionary = {}
+
+## Returns cell_index for objects_layer, building and wiring it up the first
+## time this particular layer is seen. The one-time O(children) scan here
+## replaces what used to be a full O(children) scan on every single lookup.
+static func _ensure_index(objects_layer: TileMapLayer) -> Dictionary:
+	var layer_id := objects_layer.get_instance_id()
+	var existing: Variant = _cell_indexes.get(layer_id)
+	if existing != null:
+		return existing
+	var index := {}
+	_cell_indexes[layer_id] = index
 	for child in objects_layer.get_children():
 		if child is Node2D:
-			var anchor := objects_layer.local_to_map(child.position)
-			var size := get_object_footprint(child)
-			var rect := Rect2i(anchor, Vector2i(maxi(size.x, 1), maxi(size.y, 1)))
-			if rect.has_point(cell):
-				return child
-	return null
+			_register_object(objects_layer, index, child)
+	objects_layer.child_entered_tree.connect(Callable(AutomationUtils, "_on_object_entered").bind(objects_layer, index))
+	objects_layer.child_exiting_tree.connect(Callable(AutomationUtils, "_on_object_exiting").bind(objects_layer, index))
+	objects_layer.tree_exiting.connect(Callable(AutomationUtils, "_on_layer_freed").bind(layer_id))
+	return index
+
+static func _register_object(objects_layer: TileMapLayer, index: Dictionary, object: Node2D) -> void:
+	var anchor := objects_layer.local_to_map(object.position)
+	for cell in get_footprint_cells(anchor, get_object_footprint(object)):
+		index[cell] = object
+
+static func _unregister_object(objects_layer: TileMapLayer, index: Dictionary, object: Node2D) -> void:
+	var anchor := objects_layer.local_to_map(object.position)
+	for cell in get_footprint_cells(anchor, get_object_footprint(object)):
+		if index.get(cell) == object:
+			index.erase(cell)
+
+static func _on_object_entered(child: Node, objects_layer: TileMapLayer, index: Dictionary) -> void:
+	if child is Node2D:
+		_register_object(objects_layer, index, child)
+
+static func _on_object_exiting(child: Node, objects_layer: TileMapLayer, index: Dictionary) -> void:
+	if child is Node2D:
+		_unregister_object(objects_layer, index, child)
+
+## Drops layer_id's index when its objects_layer itself leaves the tree (e.g.
+## a procedural cave level being torn down/regenerated), so a freed layer's
+## index doesn't linger forever and a same-session new layer starts clean.
+static func _on_layer_freed(layer_id: int) -> void:
+	_cell_indexes.erase(layer_id)
 
 ## True if cell has a design-time TileSetScenesCollectionSource placement or a
 ## runtime-placed object as a child of objects_layer. Shared by

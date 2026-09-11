@@ -52,7 +52,10 @@ func _process(_delta: float) -> void:
 	if objects_layer == null:
 		_hide_all()
 		return
-	var target := AutomationUtils.find_slot_target(objects_layer, get_global_mouse_position())
+	# player.interaction_controller.update() (called from Player._process(),
+	# a parent, always before this child's _process()) already resolved this
+	# same target this frame -- see its resolved_slot_target doc comment.
+	var target := player.interaction_controller.resolved_slot_target
 	if target:
 		var player_cell := objects_layer.local_to_map(objects_layer.to_local(player.global_position))
 		var target_cell := objects_layer.local_to_map(objects_layer.to_local(target.global_position))
@@ -63,7 +66,7 @@ func _process(_delta: float) -> void:
 		for component in AutomationUtils.get_slot_components(target):
 			if component.enabled:
 				components.append(component)
-
+	
 	for i in _arrow_sprites.size():
 		var sprite := _arrow_sprites[i]
 		if i >= components.size():
@@ -76,7 +79,6 @@ func _process(_delta: float) -> void:
 		sprite.global_position = component.get_marker_global_position()
 		sprite.modulate = _color_for(component, is_output)
 		sprite.visible = true
-
 	_update_ghost(player.current_hotbar_item, target, components)
 
 func _color_for(component: ItemSlotComponent, is_output: bool) -> Color:

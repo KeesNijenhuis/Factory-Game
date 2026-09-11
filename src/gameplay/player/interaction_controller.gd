@@ -32,6 +32,12 @@ var resolved_object: Node2D = null
 ## target_cell, if it's a diggable ground cell (no wall, no placed object,
 ## not already dug) right now -- otherwise null.
 var resolved_ground_cell: Variant = null
+## Whatever object AutomationUtils.find_slot_target resolves under the mouse
+## right now, or null -- computed once per frame here so WrenchSlotIndicator
+## and ToolTargetIndicator (previously each calling find_slot_target
+## themselves, every frame, while the Wrench/an Upgrade was equipped) can
+## both just read this instead of resolving the same target twice.
+var resolved_slot_target: Node2D = null
 
 func update() -> void:
 	player_cell = Vector2i.ZERO
@@ -40,6 +46,7 @@ func update() -> void:
 	resolved_wall_cell = null
 	resolved_object = null
 	resolved_ground_cell = null
+	resolved_slot_target = null
 	queue_redraw()
 
 	var level := _get_current_level()
@@ -50,6 +57,8 @@ func update() -> void:
 	player_cell = objects_layer.local_to_map(objects_layer.to_local(player.global_position))
 	target_cell = objects_layer.local_to_map(objects_layer.to_local(player.get_global_mouse_position()))
 	is_in_reach = AutomationUtils.is_within_reach(player_cell, target_cell)
+	if player.current_tool_type == Item.ToolTypes.Wrench or (player.current_hotbar_item != null and player.current_hotbar_item.item_type == Item.ItemType.UPGRADE):
+		resolved_slot_target = AutomationUtils.find_slot_target(objects_layer, player.get_global_mouse_position())
 	if not is_in_reach:
 		return
 
