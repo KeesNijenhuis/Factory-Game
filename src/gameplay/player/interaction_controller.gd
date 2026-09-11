@@ -76,7 +76,7 @@ func update() -> void:
 
 	var ground_layer := level.get_ground_layer() as CaveGroundLayer
 	if ground_layer and resolved_object == null \
-			and (walls_layer == null or not walls_layer.is_wall_cell(target_cell)) \
+			and (walls_layer == null or not (walls_layer.is_wall_cell(target_cell) or walls_layer.is_base_cell(target_cell))) \
 			and ground_layer.is_diggable(target_cell):
 		resolved_ground_cell = target_cell
 
@@ -125,10 +125,14 @@ func _find_matching_hit_box(tool_type: Item.ToolTypes) -> HitBox:
 			return hit_box
 	return null
 
-## World position of whatever actually resolved -- the standing wall cell
-## takes priority over the raw mouse cell (e.g. the mouse may be over a
-## decorative cap tile one cell short of the wall it fronts). Falls back to
-## the old facing marker when the mouse isn't over an adjacent tile at all,
+## World position of whatever actually resolved -- for the Pickaxe, the
+## standing wall cell takes priority over the raw mouse cell (e.g. the mouse
+## may be over a decorative cap tile one cell short of the wall it fronts).
+## Gated to the Pickaxe specifically since resolved_wall_cell resolves
+## regardless of which tool is equipped, but only the Pickaxe actually acts on
+## a wall cell -- an equipped Shovel/Axe/Hoe should stay positioned on the
+## raw hovered cell even while the mouse is over a wall's cap tile. Falls back
+## to the old facing marker when the mouse isn't over an adjacent tile at all,
 ## so the ungated Digging/Tilling states still have somewhere sane to put
 ## their tool if the mouse happens to be out of range.
 func get_target_world_position() -> Vector2:
@@ -136,7 +140,7 @@ func get_target_world_position() -> Vector2:
 	if not is_in_reach or level == null:
 		var marker: Marker2D = player.attack_positions.get(player.last_direction)
 		return marker.global_position if marker else player.global_position
-	if resolved_wall_cell != null:
+	if resolved_wall_cell != null and player.current_tool_type == Item.ToolTypes.Pickaxe:
 		var walls_layer := level.get_walls_layer()
 		return walls_layer.to_global(walls_layer.map_to_local(resolved_wall_cell))
 	var objects_layer := level.get_objects_layer()
