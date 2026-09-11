@@ -7,6 +7,7 @@ extends Control
 @onready var zoom_checkbox: CheckBox = %ZoomCheckBox
 @onready var ore_debug_checkbox: CheckBox = %OreDebugCheckBox
 @onready var placement_footprint_checkbox: CheckBox = %PlacementFootprintCheckBox
+@onready var teleport_checkbox: CheckBox = %TeleportCheckBox
 
 
 func _ready() -> void:
@@ -18,6 +19,7 @@ func _ready() -> void:
 	zoom_checkbox.toggled.connect(func(pressed: bool) -> void: DebugSettings.enable_camera_zoom = pressed)
 	ore_debug_checkbox.toggled.connect(_on_ore_debug_toggled)
 	placement_footprint_checkbox.toggled.connect(func(pressed: bool) -> void: DebugSettings.show_placement_footprint = pressed)
+	teleport_checkbox.toggled.connect(func(pressed: bool) -> void: DebugSettings.enable_debug_teleport = pressed)
 
 
 func _input(event: InputEvent) -> void:
@@ -35,6 +37,7 @@ func _populate() -> void:
 	zoom_checkbox.button_pressed = DebugSettings.enable_camera_zoom
 	ore_debug_checkbox.button_pressed = DebugSettings.show_ore_debug_draw
 	placement_footprint_checkbox.button_pressed = DebugSettings.show_placement_footprint
+	teleport_checkbox.button_pressed = DebugSettings.enable_debug_teleport
 
 
 ## Unlike the other flags here, CaveOreOverlayLayer only redraws when its own

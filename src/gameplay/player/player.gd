@@ -105,6 +105,27 @@ func _process(_delta: float) -> void:
 	if not _hit_area_owned_by_action_state():
 		update_hit_area()
 	set_hit_area_active(Input.is_action_pressed(&"interact") or Input.is_action_pressed(&"tool_target_click"))
+	_process_debug_teleport()
+
+
+## Debug cheat, separate from normal WASD movement: arrow keys jump the
+## player 200 tiles in that direction. Toggled off entirely from the debug
+## menu since it can drop the player into unloaded/solid terrain.
+const DEBUG_TELEPORT_DISTANCE_TILES: int = 200
+const DEBUG_TELEPORT_DIRECTIONS: Dictionary = {
+	&"debug_teleport_up": Vector2.UP,
+	&"debug_teleport_down": Vector2.DOWN,
+	&"debug_teleport_left": Vector2.LEFT,
+	&"debug_teleport_right": Vector2.RIGHT,
+}
+
+func _process_debug_teleport() -> void:
+	if not DebugSettings.enable_debug_teleport:
+		return
+	for action: StringName in DEBUG_TELEPORT_DIRECTIONS:
+		if Input.is_action_just_pressed(action):
+			var direction: Vector2 = DEBUG_TELEPORT_DIRECTIONS[action]
+			global_position += direction * DEBUG_TELEPORT_DISTANCE_TILES * BeltComponent.TILE_SIZE_PX
 
 ## Mining/Woodcutting/Digging/Tilling now position hit_area themselves, off
 ## the mouse-resolved target rather than the fixed facing marker -- this stops

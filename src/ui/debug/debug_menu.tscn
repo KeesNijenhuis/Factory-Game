@@ -62,3 +62,8 @@ text = "Ore Overlay Debug Draw"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Placement Footprint Outline"
+
+[node name="TeleportCheckBox" type="CheckBox" parent="Panel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Debug Teleport (Arrow Keys, 200 Tiles)"
