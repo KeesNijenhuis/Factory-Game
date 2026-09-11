@@ -66,7 +66,7 @@ func get_size() -> Vector2i:
 
 
 ## Value-equality check against another CaveData's tile grid -- used by the
-## reproducibility check (see tools/cave_gen_reproducibility_check.gd).
+## reproducibility check (see tools/cave_chunk_gen_reproducibility_check.gd).
 func grid_equals(other: CaveData) -> bool:
 	if other == null or other.width != width or other.height != height:
 		return false

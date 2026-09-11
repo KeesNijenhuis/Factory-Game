@@ -1,16 +1,21 @@
 extends BaseLevel
 class_name ProceduralCaveLevel
 ## Runtime-generated, chunk-streamed cave level: on _ready(), CaveChunkStreamer
-## synchronously builds the chunks around ORIGIN_CHUNK (the level always
-## "starts" at the same chunk coordinate -- there's no single global entrance
-## once the world is a patchwork of independently-generated chunks, see the
-## chunked-streaming plan's "regional connectivity" decision), then the
-## player spawn marker is repositioned to that chunk's own entrance.
+## synchronously builds the chunks around ORIGIN_CHUNK for a genuinely fresh
+## game (the level always "starts" at the same chunk coordinate -- there's no
+## single global entrance once the world is a patchwork of independently-
+## generated chunks, see the chunked-streaming plan's "regional connectivity"
+## decision) -- or, when a save is being loaded, around whichever chunk the
+## saved player position actually falls in (see
+## SaveManager.consume_pending_spawn_player_position()), so the initial grid
+## never has to be discarded and rebuilt once the real position is restored.
+## Either way, the player spawn marker is then repositioned to that chunk's
+## own entrance as a placeholder -- SaveManager overwrites it with the exact
+## saved position right after, for the save-load case.
 ## Steady-state chunk loading/unloading then continues via the streamer's
 ## own _process(). Sibling to the hand-authored CaveLevel/cave_level.tscn --
 ## this scene reuses the same TileSet and layer scripts but never
-## hand-paints a layout, and to the (non-streamed) procedural
-## generate_and_build() path CaveBuilder also still supports.
+## hand-paints a layout.
 ##
 ## Everything in _ready() must stay synchronous (no await/call_deferred):
 ## MainGame._perform_level_load() calls level_root.add_child(_current_level)
@@ -30,8 +35,15 @@ const ORIGIN_CHUNK: Vector2i = Vector2i.ZERO
 
 
 func _ready() -> void:
+	cave_chunk_streamer.set_chunk_load_debug_overlay_enabled(
+		(get_tree().current_scene as MainGame).show_chunk_load_debug_overlay
+	)
 	cave_chunk_streamer.prepare_startup_world_data(SaveManager.consume_startup_world_data())
-	var entrance_global := cave_chunk_streamer.load_initial_chunks(ORIGIN_CHUNK)
+	var spawn_chunk := ORIGIN_CHUNK
+	var pending_player_position: Variant = SaveManager.consume_pending_spawn_player_position()
+	if pending_player_position != null:
+		spawn_chunk = cave_chunk_streamer.world_position_to_chunk_coord(pending_player_position)
+	var entrance_global := cave_chunk_streamer.load_initial_chunks(spawn_chunk)
 	player_spawn_marker.global_position = entrance_global
 
 

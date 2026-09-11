@@ -5,16 +5,13 @@ extends Node
 ## the second half of the two-phase pipeline -- CaveGenerator is pure data,
 ## this is what actually touches TileMapLayer.
 ##
-## Two families of entry points share the same painting logic:
-## - generate_and_build() -- legacy whole-map path, clears every layer and
-##   paints one CaveData in full. Kept for any standalone/debug use.
-## - build_chunk()/build_chunk_async()/clear_chunk() -- the streaming entry
-##   points CaveChunkStreamer drives, each operating on one chunk's cells at
-##   its world offset on the SAME shared layers every other chunk paints
-##   onto (confirmed correct over per-chunk layers: TileMapLayer cell storage
-##   is sparse, so there's no memory cost to a large logical world, and
-##   terrain-autoconnect only ever sees neighbors on the same layer instance
-##   -- per-chunk layers would make cross-chunk wall shapes unreconcilable).
+## build_chunk()/build_chunk_async()/clear_chunk() are the streaming entry
+## points CaveChunkStreamer drives, each operating on one chunk's cells at
+## its world offset on the SAME shared layers every other chunk paints onto
+## (confirmed correct over per-chunk layers: TileMapLayer cell storage is
+## sparse, so there's no memory cost to a large logical world, and
+## terrain-autoconnect only ever sees neighbors on the same layer instance --
+## per-chunk layers would make cross-chunk wall shapes unreconcilable).
 ##
 ## Generated floor is painted as a PLAIN floor tile, NOT the Ground_Dug
 ## terrain -- Ground_Dug is a distinct, player-driven shovel-digging
@@ -60,6 +57,12 @@ var objects_layer: TileMapLayer
 ## chunk placed, without scanning/filtering objects_layer's whole child list.
 var _chunk_object_instances: Dictionary = {}
 var _ore_types_by_tile: Dictionary = {}
+## Cached, reusable pattern of a whole chunk's worth of the uniform plain-floor
+## tile -- see _get_ground_pattern(). Rebuilt lazily whenever config's chunk
+## size doesn't match the cached pattern's, so it stays correct across
+## set_generation_config() (streaming).
+var _ground_pattern: TileMapPattern
+var _ground_pattern_size: Vector2i = Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -78,46 +81,6 @@ func _ready() -> void:
 func set_generation_config(generation_config: CaveGenerationConfig) -> void:
 	config = generation_config
 	_ore_types_by_tile = _build_ore_type_lookup()
-
-
-## Legacy whole-map entry point: generates via CaveGenerator.generate() and
-## paints the whole grid in one call, clearing every layer first.
-func generate_and_build() -> CaveData:
-	var total_start := Time.get_ticks_usec()
-	var data := CaveGenerator.generate(config)
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: generation %.1f ms" % _elapsed_ms(total_start))
-
-	var paint_start := Time.get_ticks_usec()
-	var clear_start := Time.get_ticks_usec()
-	walls_layer.clear()
-	ground_layer.clear()
-	liquids_layer.clear()
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: clear layers %.1f ms" % _elapsed_ms(clear_start))
-	var ground_start := Time.get_ticks_usec()
-	_paint_ground_pass(data, Vector2i.ZERO, {})
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: ground paint %.1f ms" % _elapsed_ms(ground_start))
-	var wall_start := Time.get_ticks_usec()
-	var wall_cells := _paint_wall_and_base_pass(data, Vector2i.ZERO)
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: wall/base paint %.1f ms" % _elapsed_ms(wall_start))
-	var ore_start := Time.get_ticks_usec()
-	_paint_ore_overlay_pass(data, Vector2i.ZERO, wall_cells)
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: ore overlay paint %.1f ms" % _elapsed_ms(ore_start))
-	var liquid_start := Time.get_ticks_usec()
-	_paint_liquids_pass(data, Vector2i.ZERO)
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: liquid paint %.1f ms" % _elapsed_ms(liquid_start))
-	var node_start := Time.get_ticks_usec()
-	_instance_ore_nodes(data, Vector2i.ZERO, {}, false)
-	if DebugSettings.profile_cave_generation:
-		print("CaveBuilder: ore node instancing %.1f ms" % _elapsed_ms(node_start))
-		print("CaveBuilder: painting %.1f ms" % _elapsed_ms(paint_start))
-		print("CaveBuilder: generate_and_build() total %.1f ms" % _elapsed_ms(total_start))
-	return data
 
 
 ## Synchronous chunk build: generates + paints chunk_coord with no yields --
@@ -153,7 +116,7 @@ func build_chunk(
 	_paint_liquids_pass(data, world_offset)
 	var liquid_done := Time.get_ticks_usec()
 	var node_start := Time.get_ticks_usec()
-	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}), true)
+	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}))
 	var node_done := Time.get_ticks_usec()
 	var boundary_start := Time.get_ticks_usec()
 	_refresh_chunk_boundary(chunk_coord)
@@ -189,7 +152,7 @@ func build_chunk_async(
 		clear_chunk(chunk_coord, data)
 		return null
 	var ground_start := Time.get_ticks_usec()
-	await _paint_ground_pass_async(data, world_offset, mutation_record)
+	_paint_ground_pass(data, world_offset, mutation_record)
 	var ground_done := Time.get_ticks_usec()
 	await get_tree().process_frame
 	if _load_cancelled(should_continue):
@@ -217,7 +180,7 @@ func build_chunk_async(
 		clear_chunk(chunk_coord, data)
 		return null
 	var node_start := Time.get_ticks_usec()
-	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}), true)
+	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}))
 	var node_done := Time.get_ticks_usec()
 	var boundary_start := Time.get_ticks_usec()
 	_refresh_chunk_boundary(chunk_coord)
@@ -349,31 +312,8 @@ func _refresh_chunk_boundary(chunk_coord: Vector2i) -> void:
 	# boundary_wall_cells-only lookup missed horizontal neighbors on the
 	# left/right strips and left the south edge with a stale cap when a
 	# neighboring chunk loaded or unloaded.
-	var candidate_base_cells := {}
-	var base_tiles := {}
-	for wall_cell: Vector2i in boundary_wall_cells:
-		var base_cell := wall_cell + Vector2i.DOWN
-		candidate_base_cells[base_cell] = true
-		if walls_layer.is_wall_cell(base_cell):
-			continue
-		var has_left := walls_layer.is_wall_cell(wall_cell + Vector2i.LEFT)
-		var has_right := walls_layer.is_wall_cell(wall_cell + Vector2i.RIGHT)
-		if has_left and has_right:
-			base_tiles[base_cell] = CaveWallBase.ATLAS_MIDDLE
-		elif has_right:
-			base_tiles[base_cell] = CaveWallBase.ATLAS_LEFT_EDGE
-		elif has_left:
-			base_tiles[base_cell] = CaveWallBase.ATLAS_RIGHT_EDGE
-		else:
-			base_tiles[base_cell] = CaveWallBase.ATLAS_ISOLATED
-	for base_cell: Vector2i in candidate_base_cells:
-		if base_tiles.has(base_cell):
-			continue
-		if walls_layer.is_base_cell(base_cell):
-			walls_layer.erase_cell(base_cell)
-	walls_layer.set_base_tiles_direct(base_tiles, false)
-	var boundary_cells: Array[Vector2i] = Array(boundary_wall_cells.keys(), TYPE_VECTOR2I, "", null)
-	ore_overlay_layer.resync_around(boundary_cells)
+	walls_layer.refresh_base_tiles_around(cells)
+	ore_overlay_layer.resync_around(cells)
 
 
 func _edge_has_wall(edge_start: Vector2i, outside_step: Vector2i, length: int, horizontal: bool = true) -> bool:
@@ -419,37 +359,30 @@ func _water_cells_for(data: CaveData, world_offset: Vector2i) -> Array[Vector2i]
 ## in mutation_record (world cells) get the Ground_Dug terrain instead,
 ## reusing CaveGroundLayer's own terrain constants, so a chunk rebuild shows
 ## previously shovel-dug cells as still dug.
-func _paint_ground_pass(data: CaveData, world_offset: Vector2i, mutation_record: Dictionary) -> void:
-	var dug_cells := _world_cell_set(mutation_record.get("dug_ground_cells", []))
-	var to_dig: Array[Vector2i] = []
-	for y in range(data.height):
-		for x in range(data.width):
-			var world_cell := world_offset + Vector2i(x, y)
-			if dug_cells.has(world_cell):
-				to_dig.append(world_cell)
-			else:
-				ground_layer.set_cell(world_cell, PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS)
-	if not to_dig.is_empty():
-		ground_layer.set_cells_terrain_connect(to_dig, CaveGroundLayer.TERRAIN_SET, CaveGroundLayer.DUG_TERRAIN)
+func _paint_ground_pass(_data: CaveData, world_offset: Vector2i, mutation_record: Dictionary) -> void:
+	ground_layer.set_pattern(world_offset, _get_ground_pattern())
+	var dug_cells: Array = mutation_record.get("dug_ground_cells", [])
+	if not dug_cells.is_empty():
+		var to_dig := _world_cell_set(dug_cells).keys()
+		ground_layer.set_cells_terrain_connect(Array(to_dig, TYPE_VECTOR2I, "", null), CaveGroundLayer.TERRAIN_SET, CaveGroundLayer.DUG_TERRAIN)
 
 
-func _paint_ground_pass_async(data: CaveData, world_offset: Vector2i, mutation_record: Dictionary) -> void:
-	var dug_cells := _world_cell_set(mutation_record.get("dug_ground_cells", []))
-	var to_dig: Array[Vector2i] = []
-	var painted := 0
-	for y in range(data.height):
-		for x in range(data.width):
-			var world_cell := world_offset + Vector2i(x, y)
-			if dug_cells.has(world_cell):
-				to_dig.append(world_cell)
-			else:
-				ground_layer.set_cell(world_cell, PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS)
-			painted += 1
-			if painted >= maxi(1, async_paint_cells_per_frame):
-				painted = 0
-				await get_tree().process_frame
-	if not to_dig.is_empty():
-		ground_layer.set_cells_terrain_connect(to_dig, CaveGroundLayer.TERRAIN_SET, CaveGroundLayer.DUG_TERRAIN)
+## Cached whole-chunk pattern of the uniform plain-floor tile, rebuilt
+## whenever config's chunk size doesn't match what's cached.
+func _get_ground_pattern() -> TileMapPattern:
+	var size := Vector2i(config.map_width, config.map_height)
+	if _ground_pattern == null or _ground_pattern_size != size:
+		var pattern := TileMapPattern.new()
+		for y in range(size.y):
+			for x in range(size.x):
+				# TileMapPattern.set_cell()'s alternative_tile parameter
+				# defaults to -1 (an empty/invalid cell), unlike
+				# TileMapLayer.set_cell()'s default of 0 -- must be passed
+				# explicitly or set_pattern() pastes nothing.
+				pattern.set_cell(Vector2i(x, y), PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS, 0)
+		_ground_pattern = pattern
+		_ground_pattern_size = size
+	return _ground_pattern
 
 
 ## Wall pass (one batched terrain-connect call -- see class doc for why it's
@@ -578,19 +511,16 @@ func _paint_liquids_pass_async(data: CaveData, world_offset: Vector2i) -> void:
 ## is new, not the object identity or rendering. ore_node_records (world-cell
 ## keyed, see CaveChunkStreamer) re-applies a previously depleted/damaged
 ## node's saved state via apply_save_data() rather than spawning it fresh.
-## is_chunked opts the instance out of self-registering into "saveable" --
-## only correct for the chunk-streaming path, where CaveChunkStreamer owns
-## capturing/restoring this state itself (see clear_chunk()); the legacy
-## whole-map generate_and_build() path has no streamer, so it must keep the
-## normal self-registration behavior.
-func _instance_ore_nodes(data: CaveData, world_offset: Vector2i, ore_node_records: Dictionary, is_chunked: bool) -> Array[Node2D]:
+## Opts the instance out of self-registering into "saveable" -- CaveChunkStreamer
+## owns capturing/restoring this state itself instead (see clear_chunk()).
+func _instance_ore_nodes(data: CaveData, world_offset: Vector2i, ore_node_records: Dictionary) -> Array[Node2D]:
 	var instances: Array[Node2D] = []
 	for local_cell: Vector2i in data.ore_node_placements:
 		var node_type: OreNodeType = data.ore_node_placements[local_cell]
 		var world_cell := world_offset + local_cell
 		var instance: Node2D = node_type.scene.instantiate()
 		instance.position = objects_layer.map_to_local(world_cell)
-		if is_chunked and "self_register_saveable" in instance:
+		if "self_register_saveable" in instance:
 			instance.self_register_saveable = false
 		objects_layer.add_child(instance)
 		var record_key := "%d,%d" % [world_cell.x, world_cell.y]

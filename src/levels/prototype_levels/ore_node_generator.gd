@@ -42,9 +42,24 @@ func _get_free_cells() -> Array[Vector2i]:
 	for cell in ground_layer.get_used_cells():
 		if walls_layer.get_cell_source_id(cell) == -1 \
 				and not (ground_layer as CaveGroundLayer).is_dug(cell) \
-				and not AutomationUtils.is_cell_occupied(objects_layer, cell):
+				and not AutomationUtils.is_cell_occupied(objects_layer, cell) \
+				and not _has_adjacent_wall(cell):
 			cells.append(cell)
 	return cells
+
+
+## Nodes must sit at least one tile away from every wall (and, by extension,
+## every wall-base cap, which always paints directly under a wall cell) --
+## checks all 8 neighbors, not just the 4 orthogonal ones, so a node can't
+## spawn diagonally against a wall corner either.
+func _has_adjacent_wall(cell: Vector2i) -> bool:
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			if dx == 0 and dy == 0:
+				continue
+			if walls_layer.get_cell_source_id(cell + Vector2i(dx, dy)) != -1:
+				return true
+	return false
 
 
 func _spawn_node(cell: Vector2i, node_type: OreNodeType) -> void:

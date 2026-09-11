@@ -24,12 +24,20 @@ Technology Tier 3:
 
 CHANGES:
 - remove item id from items, derive it from the name
-
+- dropped item from wall has no texture, pick up does not work
 
 Recipe editor:
 - 	right click on item in list to be able to paint it in the grid (draw a rectangle around it to 
-	disable this, right click again, or start dragging another item to disable)
--	saved text should disappear after a delay
-- 	make it an always floating window
+	visualise this in the item list, right click again, or start dragging another item to disable)
+-	saved text should disappear after a delay after saving
+- 	make it an always floating window / atleast move it to the bottom bar
 -	give complete flexibility on window and panel size
 
+
+Proc Gen:
+- tilemap pattern for the ground
+- when loading, change starting chunk to load to player's position.
+- when loading the base_wall seams at chunk borders re appear
+- AutomationUtils.find_object_at_cell fix
+
+blast furnace bug: when a recipe has two of the same item in its recipe, it consumes two from the first slot it sees, not one from each

@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://bosrtp7m4rkfx"]
-
-[ext_resource type="Script" uid="uid://csa4diikegoed" path="res://src/levels/prototype_levels/cave_gen_debug_view.gd" id="1_avs55"]
-[ext_resource type="Resource" uid="uid://dptwn6cxd1dkf" path="res://src/resources/cave_generation/presets/default_cave.tres" id="2_q5fem"]
-
-[node name="CaveGenDebugView" type="Node2D" unique_id=1676524404]
-script = ExtResource("1_avs55")
-config = ExtResource("2_q5fem")

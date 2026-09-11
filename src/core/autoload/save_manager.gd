@@ -25,6 +25,13 @@ var _busy: bool = false
 var _is_loading: bool = false
 var _has_completed_first_level_load: bool = false
 var _startup_quickload_data: Dictionary = {}
+## Saved player position for whichever load is about to happen, set right
+## before the triggering main_game.load_level() call so a chunk-streamed
+## level's _ready() can center its initial chunk grid on the player's real
+## saved position instead of always defaulting to the origin chunk -- see
+## ProceduralCaveLevel._ready()/CaveChunkStreamer.load_initial_chunks().
+## Vector2 once set, null once consumed or when no load is pending.
+var _pending_spawn_player_position: Variant = null
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -71,11 +78,27 @@ func prepare_startup_quickload() -> Dictionary:
 	if not has_quicksave():
 		return {}
 	_startup_quickload_data = _read_json(QUICKSAVE_PATH)
+	_pending_spawn_player_position = _extract_player_position(_startup_quickload_data)
 	return _startup_quickload_data.duplicate(true)
 
 func consume_startup_world_data() -> Dictionary:
 	var world_data: Dictionary = _startup_quickload_data.get("world_objects", {}).get("cave_chunk_streamer", {})
 	return world_data.duplicate(true)
+
+## Returns and clears the saved player position for whichever load is
+## currently in flight, or null if this is a fresh game (no save involved) or
+## nothing is pending. A chunk-streamed level's _ready() calls this once to
+## decide which chunk to center its initial synchronous load on.
+func consume_pending_spawn_player_position() -> Variant:
+	var position: Variant = _pending_spawn_player_position
+	_pending_spawn_player_position = null
+	return position
+
+func _extract_player_position(data: Dictionary) -> Variant:
+	var position: Dictionary = data.get("player", {}).get("position", {})
+	if position.is_empty():
+		return null
+	return Vector2(position.get("x", 0.0), position.get("y", 0.0))
 
 func apply_startup_quickload() -> void:
 	if _startup_quickload_data.is_empty():
@@ -226,6 +249,7 @@ func _apply_loaded_data(data: Dictionary, slot: int, world_already_applied: bool
 
 	var main_game := _main_game
 	if not world_already_applied:
+		_pending_spawn_player_position = _extract_player_position(data)
 		main_game.load_level(data.get("level_uid", main_game.current_level_uid), true)
 		await main_game.level_loaded
 	# TileMapLayer scene-collection cells (chests, furnaces, ore/tree objects)

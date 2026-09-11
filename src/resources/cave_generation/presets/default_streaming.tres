@@ -7,6 +7,5 @@
 script = ExtResource("1_cfg")
 chunk_config = ExtResource("2_chunk")
 initial_load_radius_chunks = 3
-load_radius_chunks = 5
-keep_radius_chunks = 6
-retained_chunk_capacity = 8
+load_radius_chunks = 2
+retained_chunk_capacity = 6

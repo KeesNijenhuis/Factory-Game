@@ -18,7 +18,9 @@
 
 [node name="MainGame" type="Node" unique_id=1787262438]
 script = ExtResource("1_3fed5")
+load_quicksave_on_start = true
 show_initial_chunk_grid_debug_view = true
+show_chunk_load_debug_overlay = true
 
 [node name="Systems" type="Node" parent="." unique_id=1023838794]
 script = ExtResource("2_ibp4d")

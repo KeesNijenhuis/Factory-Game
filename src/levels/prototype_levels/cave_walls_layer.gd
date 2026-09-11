@@ -319,9 +319,15 @@ func damage_wall_cell(cell: Vector2i) -> bool:
 		# autotile shape of the neighbors that used to connect to it, so
 		# their artwork would otherwise keep showing the stale connection.
 		_refresh_wall_terrain_around(cell)
-		_sync_base_tiles()
+		# Only cell itself (its own former cap, now stale) and its
+		# up/left/right neighbors (whose cap shape depends on cell's wall
+		# status) can possibly need a cap change -- see
+		# refresh_base_tiles_around()'s doc comment. Scoped this way instead
+		# of a full-layer _sync_base_tiles() rescan, which would revisit
+		# every loaded chunk's cells on every single mined cell.
+		refresh_base_tiles_around([cell, cell + Vector2i.UP, cell + Vector2i.LEFT, cell + Vector2i.RIGHT])
 		if ore_overlay_layer != null:
-			ore_overlay_layer.resync()
+			ore_overlay_layer.resync_around([cell])
 		call_deferred("_drop_item", drop_position, item)
 	else:
 		_wall_hits[cell] = hits
@@ -332,7 +338,9 @@ func damage_wall_cell(cell: Vector2i) -> bool:
 ## and apply_save_data()'s replay share one place that keeps _removed_cells
 ## in sync with the tile data.
 func _erase_wall_cell(cell: Vector2i) -> void:
+	_syncing = true
 	erase_cell(cell)
+	_syncing = false
 	_removed_cells[cell] = true
 	cell_removed.emit(cell)
 
@@ -411,6 +419,42 @@ func set_base_tiles_direct(base_tiles: Dictionary, sync_existing: bool = true) -
 	_syncing = false
 	if sync_existing:
 		_sync_base_tiles()
+
+
+## Recomputes the Cave_Wall_Base cap belonging to each cell in
+## `wall_positions`, without rescanning the whole layer the way
+## _sync_base_tiles() does. A position still standing as a wall gets its cap
+## recomputed (or added) from its own down/left/right neighbors, same rule
+## as CaveWallBase.compute_base_tiles(); a position that no longer is a wall
+## (e.g. one just mined away) has its own now-stale cap cleared instead.
+## Callers only need to pass positions whose down/left/right relationship to
+## some other cell actually changed -- see damage_wall_cell()'s call for the
+## single-mined-cell case and CaveBuilder._refresh_chunk_boundary() for the
+## chunk-seam case.
+func refresh_base_tiles_around(wall_positions: Array[Vector2i]) -> void:
+	var candidate_base_cells := {}
+	var base_tiles := {}
+	for wall_cell in wall_positions:
+		var base_cell := wall_cell + Vector2i.DOWN
+		candidate_base_cells[base_cell] = true
+		if not _is_wall_cell(wall_cell) or _is_wall_cell(base_cell):
+			continue
+		var has_left := _is_wall_cell(wall_cell + Vector2i.LEFT)
+		var has_right := _is_wall_cell(wall_cell + Vector2i.RIGHT)
+		if has_left and has_right:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_MIDDLE
+		elif has_right:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_LEFT_EDGE
+		elif has_left:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_RIGHT_EDGE
+		else:
+			base_tiles[base_cell] = CaveWallBase.ATLAS_ISOLATED
+	_syncing = true
+	for base_cell: Vector2i in candidate_base_cells:
+		if not base_tiles.has(base_cell) and _is_base_cell(base_cell):
+			erase_cell(base_cell)
+	_syncing = false
+	set_base_tiles_direct(base_tiles, false)
 
 
 ## Recomputes existing wall cells after a mined cell or seam change without
@@ -494,6 +538,18 @@ func _drop_item(drop_position: Vector2, item: Item) -> void:
 	var entity_root: Node2D = get_tree().current_scene.get_node("%EntityRoot")
 	var item_instance := GroundItem.spawn(entity_root, item, 1, drop_position)
 	item_instance.z_index = 2
+
+
+## Full, neighbor-aware recompute of every Cave Wall Base cap across the
+## entire layer. Normally runs automatically off the `changed` signal
+## (_on_changed()); exposed here so a caller that intentionally painted with
+## _syncing suppressed for performance -- see CaveChunkStreamer.apply_save_data(),
+## whose chunk-rebuild order isn't guaranteed to match spatial adjacency, so
+## the narrower per-chunk CaveBuilder._refresh_chunk_boundary() band-fix can't
+## be relied on there -- can still force one authoritative resync once the
+## whole batch is done.
+func sync_base_tiles() -> void:
+	_sync_base_tiles()
 
 
 func _on_changed() -> void:

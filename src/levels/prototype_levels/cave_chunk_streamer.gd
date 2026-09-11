@@ -24,9 +24,11 @@ extends Node
 
 @export var streaming_config: CaveWorldStreamingConfig
 @export var cave_builder_path: NodePath
+@export var show_chunk_load_debug_overlay: bool = false
 
 const CACHE_VERSION: int = 1
 const CACHE_ROOT: String = "user://cave_chunk_cache/"
+const CHUNK_LOAD_DEBUG_OVERLAY_SCRIPT = preload("res://src/levels/prototype_levels/chunk_load_debug_overlay.gd")
 
 var cave_builder: CaveBuilder
 ## Not a scene-relative NodePath -- Player lives under MainGame's
@@ -64,6 +66,7 @@ var _stream_revision: int = 0
 ## sitting exactly on Vector2i.ZERO.
 var _current_center_chunk: Vector2i = Vector2i(1 << 30, 1 << 30)
 var _cache_namespace: String = ""
+var _chunk_debug_overlay: Node2D
 
 
 func _ready() -> void:
@@ -85,6 +88,9 @@ func _ready() -> void:
 	_world_seed = streaming_config.seed if streaming_config.seed != 0 else randi()
 	prepare_startup_world_data(SaveManager.consume_startup_world_data())
 	_cache_namespace = _build_cache_namespace()
+	if show_chunk_load_debug_overlay:
+		_chunk_debug_overlay = CHUNK_LOAD_DEBUG_OVERLAY_SCRIPT.new()
+		add_child(_chunk_debug_overlay)
 	cave_builder.walls_layer.cell_removed.connect(_on_wall_cell_removed)
 	cave_builder.ground_layer.cell_dug.connect(_on_ground_cell_dug)
 
@@ -100,6 +106,13 @@ func prepare_startup_world_data(data: Dictionary) -> void:
 			_mutations[Vector2i(int(parts[0]), int(parts[1]))] = data["chunks"][key]
 	_generated_chunks.clear()
 	_restore_generated_chunks(data.get("generated_chunks", {}))
+
+
+func set_chunk_load_debug_overlay_enabled(enabled: bool) -> void:
+	show_chunk_load_debug_overlay = enabled
+	if enabled and _chunk_debug_overlay == null:
+		_chunk_debug_overlay = CHUNK_LOAD_DEBUG_OVERLAY_SCRIPT.new()
+		add_child(_chunk_debug_overlay)
 
 
 func chunk_size() -> Vector2i:
@@ -130,12 +143,20 @@ func load_initial_chunks(spawn_chunk_coord: Vector2i) -> Vector2:
 	for y in range(-radius, radius + 1):
 		for x in range(-radius, radius + 1):
 			var coord := spawn_chunk_coord + Vector2i(x, y)
-			var cached_data: CaveData = _generated_chunks.get(coord, _read_cached_chunk(coord))
+			var source := "generated"
+			var cached_data: CaveData = _generated_chunks.get(coord)
+			if cached_data != null:
+				source = "save"
+			else:
+				cached_data = _read_cached_chunk(coord)
+				if cached_data != null:
+					source = "disk"
 			var data := cave_builder.build_chunk(coord, _world_seed, _mutations.get(coord, {}), cached_data)
 			if cached_data == null:
 				_write_cached_chunk(coord, data)
 			_generated_chunks[coord] = data
 			_loaded_chunks[coord] = data
+			_update_chunk_debug_overlay(coord, source)
 			chunk_count += 1
 			if coord == spawn_chunk_coord:
 				spawn_data = data
@@ -157,8 +178,7 @@ func _process(_delta: float) -> void:
 		return
 
 	_expire_chunk_grace_periods()
-	var player_cell: Vector2i = cave_builder.ground_layer.local_to_map(cave_builder.ground_layer.to_local(player.global_position))
-	var player_chunk := _cell_to_chunk_coord(player_cell)
+	var player_chunk := world_position_to_chunk_coord(player.global_position)
 	if player_chunk != _current_center_chunk:
 		_current_center_chunk = player_chunk
 		_recompute_active_set(player_chunk)
@@ -177,6 +197,14 @@ func _process(_delta: float) -> void:
 func _cell_to_chunk_coord(cell: Vector2i) -> Vector2i:
 	var size := chunk_size()
 	return Vector2i(floori(float(cell.x) / size.x), floori(float(cell.y) / size.y))
+
+
+## Which chunk a world/global position falls in. Used both by the player's
+## own steady-state tracking (_process()) and by ProceduralCaveLevel to
+## decide which chunk to center a save's initial chunk load on.
+func world_position_to_chunk_coord(world_position: Vector2) -> Vector2i:
+	var cell: Vector2i = cave_builder.ground_layer.local_to_map(cave_builder.ground_layer.to_local(world_position))
+	return _cell_to_chunk_coord(cell)
 
 
 func _recompute_active_set(center: Vector2i) -> void:
@@ -294,7 +322,15 @@ func _load_chunk_async(coord: Vector2i, request_token: int, request_revision: in
 	var should_continue := func() -> bool:
 		return request_revision == _stream_revision and _desired_load_set.has(coord) and _in_flight.get(coord, -1) == request_token
 	if retained_data == null:
-		retained_data = _generated_chunks.get(coord, _read_cached_chunk(coord))
+		retained_data = _generated_chunks.get(coord)
+		if retained_data != null:
+			_update_chunk_debug_overlay(coord, "save")
+		else:
+			retained_data = _read_cached_chunk(coord)
+			if retained_data != null:
+				_update_chunk_debug_overlay(coord, "disk")
+	if retained_data == null:
+		_update_chunk_debug_overlay(coord, "generated")
 	var used_cached_data := retained_data != null
 	var data: CaveData = await cave_builder.build_chunk_async(
 		coord,
@@ -409,6 +445,14 @@ func apply_save_data(data: Dictionary) -> void:
 		var stale_data: CaveData = _loaded_chunks[coord]
 		cave_builder.clear_chunk(coord, stale_data)
 		_loaded_chunks[coord] = cave_builder.build_chunk(coord, _world_seed, _mutations.get(coord, {}))
+	# _loaded_chunks.keys() iterates in whatever order these chunks happened
+	# to stream in during the play session that produced this save, not a
+	# clean row-major grid -- so unlike load_initial_chunks()'s guaranteed
+	# scan order, CaveBuilder._refresh_chunk_boundary()'s per-chunk healing
+	# above isn't guaranteed to patch every seam correctly. One full resync
+	# after the whole batch is rebuilt makes the final result correct
+	# regardless of that order.
+	cave_builder.walls_layer.sync_base_tiles()
 	_recompute_active_set(_current_center_chunk)
 
 
@@ -489,3 +533,18 @@ func _write_cached_chunk(coord: Vector2i, data: CaveData) -> void:
 		push_warning("CaveChunkStreamer: could not write cache for chunk %s" % coord)
 		return
 	file.store_string(JSON.stringify(data.to_cache_dict()))
+
+
+func _update_chunk_debug_overlay(coord: Vector2i, source: String) -> void:
+	if _chunk_debug_overlay == null:
+		return
+	var size := chunk_size()
+	var top_left := Vector2i(coord.x * size.x, coord.y * size.y)
+	var bottom_right := top_left + size
+	var top_left_world := cave_builder.ground_layer.to_global(cave_builder.ground_layer.map_to_local(top_left))
+	var bottom_right_world := cave_builder.ground_layer.to_global(cave_builder.ground_layer.map_to_local(bottom_right))
+	_chunk_debug_overlay.set_chunk_status(
+		coord,
+		Rect2(_chunk_debug_overlay.to_local(top_left_world), bottom_right_world - top_left_world),
+		source,
+	)

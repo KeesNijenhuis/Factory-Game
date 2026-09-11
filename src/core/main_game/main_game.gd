@@ -11,6 +11,7 @@ const PLAYER_SCENE_UID : String = "uid://doiund6pbioe4"
 
 @export var load_quicksave_on_start: bool = false
 @export var show_initial_chunk_grid_debug_view: bool = false
+@export var show_chunk_load_debug_overlay: bool = false
 
 signal level_loaded(level: BaseLevel)
 

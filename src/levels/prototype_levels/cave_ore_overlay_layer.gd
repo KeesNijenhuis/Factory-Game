@@ -153,12 +153,16 @@ func resync() -> void:
 
 
 ## Re-sync only ore cells whose wall neighborhood may have changed. This is
-## used for chunk seam updates, where a full overlay rebuild would revisit
-## every ore cell in the loaded world.
+## used for chunk seam updates and single-cell mining, where a full overlay
+## rebuild would revisit every ore cell in the loaded world. Expands each
+## changed cell by all 8 neighbors (plus itself), matching the full
+## neighborhood _is_fully_enclosed() checks -- a diagonal neighbor's
+## enclosure art depends on `changed_cell` too, not just its orthogonal
+## neighbors.
 func resync_around(changed_cells: Array[Vector2i]) -> void:
 	var affected := {}
 	for changed_cell in changed_cells:
-		for offset in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		for offset in [Vector2i.ZERO] + CaveWallsLayer.NEIGHBOR_OFFSETS:
 			var cell: Vector2i = changed_cell + offset
 			if _ore_cells.has(cell):
 				affected[cell] = true
@@ -178,7 +182,7 @@ func resync_around(changed_cells: Array[Vector2i]) -> void:
 func _apply_cell(cell: Vector2i) -> void:
 	if not walls_layer.is_wall_cell(cell):
 		erase_cell(cell)
-		_erase_if_not_wall(cell + Vector2i.DOWN)
+		_erase_if_unmanaged(cell + Vector2i.DOWN)
 		_ore_cells.erase(cell)
 		_fallback_variants.erase(cell)
 		_queue_debug_redraw()
@@ -205,7 +209,7 @@ func _apply_base_cell(wall_cell: Vector2i, wall_has_ore: bool, ore_type: OreType
 	if wall_has_ore and walls_layer.is_base_cell(base_cell):
 		_mirror_cell(base_cell, base_cell, ore_type)
 	else:
-		_erase_if_not_wall(base_cell)
+		_erase_if_unmanaged(base_cell)
 
 
 ## Copies whatever atlas piece walls_layer is currently showing at
@@ -222,12 +226,20 @@ func _mirror_cell(source_cell: Vector2i, target_cell: Vector2i, ore_type: OreTyp
 	return false
 
 
-## A standing wall cell (ore or not) always manages its own overlay tile via
-## its own _apply_cell() call -- erasing `cell` here too, just because some
-## other cell's cleanup happened to compute this position, would clobber
-## whatever that wall legitimately drew.
-func _erase_if_not_wall(cell: Vector2i) -> void:
-	if not walls_layer.is_wall_cell(cell):
+## Only a cell tracked in _ore_cells ever manages its own overlay tile via its
+## own _apply_cell() call (mark_ore_cell()/resync()/resync_around() are the
+## only things that ever call it) -- erasing `cell` here too, just because
+## some other cell's cleanup happened to compute this position, would clobber
+## whatever that ore cell legitimately drew, now or on its next resync.
+## Checking is_wall_cell() here instead (the previous behavior) was wrong: a
+## cap that turns out, once a neighboring chunk loads, to actually be a plain
+## (non-ore) standing wall is_wall_cell()==true but was never and will never
+## be tracked in _ore_cells, so nothing else was ever going to clean up its
+## now-stale ore art -- leaving ore-overlay art sitting on a plain wall that
+## reads as ore but neither drops ore nor (once it's a base cap instead of a
+## wall) resolves as mineable at all.
+func _erase_if_unmanaged(cell: Vector2i) -> void:
+	if not is_ore_cell(cell):
 		erase_cell(cell)
 
 
