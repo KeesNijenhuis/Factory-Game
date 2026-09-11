@@ -2051,7 +2051,6 @@ z_index = 1
 collision_layer = 8
 collision_mask = 35
 script = ExtResource("1_khxic")
-move_speed = 70.0
 move_speed_sprinting = 80.0
 dash_acceleration = 1500.0
 
