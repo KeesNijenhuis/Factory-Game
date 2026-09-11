@@ -107,10 +107,10 @@ func build_chunk(
 	_paint_ground_pass(data, world_offset, mutation_record)
 	var ground_done := Time.get_ticks_usec()
 	var wall_start := Time.get_ticks_usec()
-	var wall_cells := _paint_wall_and_base_pass(data, world_offset, mutation_record)
+	var wall_pass_result := _paint_wall_and_base_pass(data, world_offset, mutation_record)
 	var wall_done := Time.get_ticks_usec()
 	var ore_start := Time.get_ticks_usec()
-	_paint_ore_overlay_pass(data, world_offset, wall_cells)
+	_paint_ore_overlay_pass(data, world_offset, wall_pass_result)
 	var ore_done := Time.get_ticks_usec()
 	var liquid_start := Time.get_ticks_usec()
 	_paint_liquids_pass(data, world_offset)
@@ -130,10 +130,27 @@ func build_chunk(
 	return data
 
 
-## Steady-state chunk build: same result as build_chunk(), but yields after
-## bounded paint batches so a chunk load never costs more than one small
-## uninterrupted frame at a time. Pure CaveData generation stays on the main
-## thread; only scene-safe painting is spread across frames.
+## Steady-state chunk build: same result as build_chunk(), but yields where a
+## phase's own cost can still genuinely run long, so a chunk load never costs
+## more than one small uninterrupted frame at a time. Pure CaveData
+## generation stays on the main thread; only scene-safe painting is spread
+## across frames.
+##
+## Only 2 inter-phase yields remain (after generation, after the wall pass),
+## down from one after every phase -- ground/ore/liquids/nodes/boundary are
+## all sub-2ms now (the ore pass's own direct-path optimization made the
+## live-query path this used to need obsolete for the common case), so
+## yielding around them bought nothing but added frame-wait latency without
+## reducing any single frame's actual cost. The wall pass keeps its own
+## surrounding yields because it's still the one phase whose cost can
+## meaningfully vary (its own internal per-batch yielding, plus the rare
+## terrain-connect fallback, can still run long) -- and it already yields
+## internally per async_paint_cells_per_frame cells, so this outer pair just
+## brackets that with cancellation checks. A stale should_continue() between
+## the two remaining yields is still caught: GDScript only actually suspends
+## at an await, so _stream_revision/_desired_load_set (mutated only by
+## CaveChunkStreamer._process(), the same thread) can't change without one --
+## nothing was lost by removing checks that had no intervening yield anyway.
 func build_chunk_async(
 	chunk_coord: Vector2i,
 	world_seed: int,
@@ -151,34 +168,21 @@ func build_chunk_async(
 	if _load_cancelled(should_continue):
 		clear_chunk(chunk_coord, data)
 		return null
-	var ground_start := Time.get_ticks_usec()
 	_paint_ground_pass(data, world_offset, mutation_record)
 	var ground_done := Time.get_ticks_usec()
-	await get_tree().process_frame
-	if _load_cancelled(should_continue):
-		clear_chunk(chunk_coord, data)
-		return null
 	var wall_start := Time.get_ticks_usec()
-	var wall_cells := await _paint_wall_and_base_pass_async(data, world_offset, mutation_record)
+	var wall_pass_result := await _paint_wall_and_base_pass_async(data, world_offset, mutation_record)
 	var wall_done := Time.get_ticks_usec()
 	await get_tree().process_frame
 	if _load_cancelled(should_continue):
 		clear_chunk(chunk_coord, data)
 		return null
 	var ore_start := Time.get_ticks_usec()
-	await _paint_ore_overlay_pass_async(data, world_offset, wall_cells)
+	await _paint_ore_overlay_pass_async(data, world_offset, wall_pass_result)
 	var ore_done := Time.get_ticks_usec()
-	await get_tree().process_frame
-	if _load_cancelled(should_continue):
-		clear_chunk(chunk_coord, data)
-		return null
 	var liquid_start := Time.get_ticks_usec()
 	await _paint_liquids_pass_async(data, world_offset)
 	var liquid_done := Time.get_ticks_usec()
-	await get_tree().process_frame
-	if _load_cancelled(should_continue):
-		clear_chunk(chunk_coord, data)
-		return null
 	var node_start := Time.get_ticks_usec()
 	_chunk_object_instances[chunk_coord] = _instance_ore_nodes(data, world_offset, mutation_record.get("ore_nodes", {}))
 	var node_done := Time.get_ticks_usec()
@@ -196,20 +200,23 @@ func build_chunk_async(
 
 ## Erases exactly the cells `data` painted at chunk_coord's world offset
 ## (recomputed from the already-in-memory `data` -- no regeneration needed)
-## and frees this chunk's ore-node instances. Cheap: erase_cell() has no
-## neighbor-shape recompute cost, unlike painting. Returns each freed ore
-## node's save-data, keyed "world_x,world_y" (matching the ore_nodes shape
-## in CaveBuilder.build_chunk()'s mutation_record), so the caller
-## (CaveChunkStreamer) can remember it for the next time this chunk builds.
+## and frees this chunk's ore-node instances. The wall/cap erasure goes
+## through CaveWallsLayer.erase_cells_direct() and the ore cleanup through
+## CaveOreOverlayLayer.release_cells() specifically because a plain
+## erase_cell()/resync() here would each be O(everything currently loaded)
+## rather than O(this chunk) -- see those methods' own doc comments. Returns
+## each freed ore node's save-data, keyed "world_x,world_y" (matching the
+## ore_nodes shape in CaveBuilder.build_chunk()'s mutation_record), so the
+## caller (CaveChunkStreamer) can remember it for the next time this chunk
+## builds.
 func clear_chunk(chunk_coord: Vector2i, data: CaveData) -> Dictionary:
+	var unload_start := Time.get_ticks_usec()
 	var world_offset := _chunk_world_offset(chunk_coord)
 	var wall_cells := _wall_cells_for(data, world_offset)
 
-	for cell in wall_cells:
-		walls_layer.erase_cell(cell)
+	walls_layer.erase_cells_direct(wall_cells)
 	var base_tiles := CaveWallBase.compute_base_tiles(wall_cells)
-	for cell: Vector2i in base_tiles:
-		walls_layer.erase_cell(cell)
+	walls_layer.erase_cells_direct(Array(base_tiles.keys(), TYPE_VECTOR2I, "", null))
 	for y in range(data.height):
 		for x in range(data.width):
 			ground_layer.erase_cell(world_offset + Vector2i(x, y))
@@ -223,11 +230,7 @@ func clear_chunk(chunk_coord: Vector2i, data: CaveData) -> Dictionary:
 			ground_layer.erase_cell(cell)
 	for cell in _water_cells_for(data, world_offset):
 		liquids_layer.erase_cell(cell)
-	# Ore overlay self-cleans: resync() re-derives every currently-marked
-	# cell's art from the Walls layer's live state, and _apply_cell() erases
-	# + un-tracks any cell that's no longer a wall (the ones just erased
-	# above) -- see CaveOreOverlayLayer._apply_cell().
-	ore_overlay_layer.resync()
+	ore_overlay_layer.release_cells(wall_cells)
 
 	var ore_node_records := get_chunk_ore_node_records(chunk_coord)
 	for instance in _chunk_object_instances.get(chunk_coord, []):
@@ -237,6 +240,10 @@ func clear_chunk(chunk_coord: Vector2i, data: CaveData) -> Dictionary:
 	_chunk_object_instances.erase(chunk_coord)
 
 	_refresh_chunk_boundary(chunk_coord)
+	if DebugSettings.profile_cave_generation:
+		print("CaveChunkUnloadProfile chunk=(%d,%d) unload_ms=%.1f" % [
+			chunk_coord.x, chunk_coord.y, _elapsed_ms(unload_start),
+		])
 	return ore_node_records
 
 
@@ -277,6 +284,22 @@ static func _elapsed_ms(start_usec: int) -> float:
 ## "one shared edge's worth of cells." Cells belonging to a currently-
 ## unloaded neighbor simply aren't wall cells on the layer yet, so they
 ## contribute nothing -- no explicit "is neighbor loaded" bookkeeping needed.
+##
+## The 4 edge strips above only ever reach a diagonal neighbor (the 4th chunk
+## at a point where 4 chunks meet) when some OTHER, orthogonally-adjacent
+## chunk's own edge strip happens to sweep over that exact corner cell while
+## the diagonal chunk is already loaded. If the diagonal chunk instead loads
+## AFTER that sweep already ran, nothing ever revisits that corner again --
+## a permanently stale wall shape right at the 4-chunk meeting point, since
+## neither this chunk's own edges nor the diagonal chunk's own edges are
+## orthogonally adjacent to each other. DIAGONAL_OFFSETS below explicitly
+## re-touches each of this chunk's 4 corner cells and their diagonal
+## counterpart in the neighboring chunk, so whichever of the 4 chunks
+## meeting at a point loads last always corrects every corner around it.
+const DIAGONAL_OFFSETS: Array[Vector2i] = [
+	Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1),
+]
+
 func _refresh_chunk_boundary(chunk_coord: Vector2i) -> void:
 	var chunk_size := Vector2i(config.map_width, config.map_height)
 	var world_offset := _chunk_world_offset(chunk_coord)
@@ -298,14 +321,24 @@ func _refresh_chunk_boundary(chunk_coord: Vector2i) -> void:
 				if walls_layer.is_wall_cell(cell):
 					boundary_wall_cells[cell] = true
 
+	for offset in DIAGONAL_OFFSETS:
+		var inside_corner := world_offset + Vector2i(
+			0 if offset.x < 0 else chunk_size.x - 1,
+			0 if offset.y < 0 else chunk_size.y - 1,
+		)
+		var outside_corner := inside_corner + offset
+		if walls_layer.is_wall_cell(inside_corner):
+			boundary_wall_cells[inside_corner] = true
+		if walls_layer.is_wall_cell(outside_corner):
+			boundary_wall_cells[outside_corner] = true
+
 	if boundary_wall_cells.is_empty():
 		return
 	var cells: Array[Vector2i] = Array(boundary_wall_cells.keys(), TYPE_VECTOR2I, "", null)
 	if not walls_layer.refresh_wall_cells_direct(cells):
 		# Erase first -- terrain_connect is otherwise a no-op for an already
 		# painted cell and would leave a stale seam shape.
-		for cell in cells:
-			walls_layer.erase_cell(cell)
+		walls_layer.erase_cells_direct(cells)
 		walls_layer.set_cells_terrain_connect(cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
 	# Base caps are decorative atlas tiles rather than terrain-connected tiles,
 	# so derive their shape from the complete live layer. The old
@@ -389,21 +422,28 @@ func _get_ground_pattern() -> TileMapPattern:
 ## never split) + base cap pass. removed_wall_cells in mutation_record (world
 ## cells) are excluded entirely, so a previously-mined cell paints as open
 ## floor from the start rather than flashing wall-then-erased. Returns the
-## painted wall cells (world coords) for the ore overlay pass.
-func _paint_wall_and_base_pass(data: CaveData, world_offset: Vector2i, mutation_record: Dictionary = {}) -> Array[Vector2i]:
+## painted wall cells (world coords) for the ore overlay pass, along with the
+## per-cell atlas assignment (`wall_atlas`) and base cap atlas assignment
+## (`base_tiles`) it computed -- empty when the terrain-connect fallback ran,
+## since that path never learns each cell's exact atlas tile -- so the ore
+## overlay pass can reuse them instead of re-querying this layer per cell.
+func _paint_wall_and_base_pass(data: CaveData, world_offset: Vector2i, mutation_record: Dictionary = {}) -> Dictionary:
 	var removed := _world_cell_set(mutation_record.get("removed_wall_cells", []))
 	var wall_cells: Array[Vector2i] = []
 	for cell in _wall_cells_for(data, world_offset):
 		if not removed.has(cell):
 			wall_cells.append(cell)
 
-	if not walls_layer.set_wall_cells_direct(wall_cells, wall_cells):
+	var wall_atlas := {}
+	if not walls_layer.set_wall_cells_direct(wall_cells, wall_cells, wall_atlas):
 		walls_layer.set_cells_terrain_connect(wall_cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
+		wall_atlas.clear()
 
 	# CaveWallsLayer's own `changed`-signal auto-sync isn't guaranteed
 	# synchronous -- call compute_base_tiles() explicitly so the result is
 	# correct the instant this function returns.
 	var base_tiles := CaveWallBase.compute_base_tiles(wall_cells)
+	_drop_base_tiles_over_live_walls(base_tiles)
 	walls_layer.set_base_tiles_direct(base_tiles, false)
 	for cell: Vector2i in base_tiles:
 		# Base cap cells sit one row below their wall cell, which can fall
@@ -412,18 +452,38 @@ func _paint_wall_and_base_pass(data: CaveData, world_offset: Vector2i, mutation_
 		# ground pass never reaches that row, so patch it in here too.
 		if ground_layer.get_cell_source_id(cell) == -1:
 			ground_layer.set_cell(cell, PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS)
-	return wall_cells
+	return {"wall_cells": wall_cells, "wall_atlas": wall_atlas, "base_tiles": base_tiles}
 
 
+## compute_base_tiles() only knows this chunk's own wall_cells, so a wall
+## cell in the chunk's last row always looks like it needs a cap one row
+## below it -- even when that row belongs to an ALREADY-LOADED south
+## neighbor and is genuinely a standing wall there (the "enclosed" case).
+## Blindly painting a cap over that live wall cell replaces the wall with
+## walkable ground -- harmless on first-time generation, since a chunk's
+## south neighbor essentially never exists yet then, but very visible on a
+## chunk reload/rebuild while its neighbors are still loaded (see the
+## streamer's grace-period cache). Drop any such entry before painting;
+## the neighbor's own already-standing wall is the authority here.
+func _drop_base_tiles_over_live_walls(base_tiles: Dictionary) -> void:
+	for cell: Vector2i in base_tiles.keys():
+		if walls_layer.is_wall_cell(cell):
+			base_tiles.erase(cell)
+
+
+## See _paint_wall_and_base_pass() -- same return shape (wall_cells, the atlas
+## it painted each cell with, and its base cap atlas), just built up across
+## frame-budgeted batches instead of one call.
 func _paint_wall_and_base_pass_async(
 	data: CaveData, world_offset: Vector2i, mutation_record: Dictionary = {}
-) -> Array[Vector2i]:
+) -> Dictionary:
 	var removed := _world_cell_set(mutation_record.get("removed_wall_cells", []))
 	var wall_cells: Array[Vector2i] = []
 	for cell in _wall_cells_for(data, world_offset):
 		if not removed.has(cell):
 			wall_cells.append(cell)
 
+	var wall_atlas := {}
 	if walls_layer.has_direct_wall_lookup():
 		var batch: Array[Vector2i] = []
 		var painted := 0
@@ -431,28 +491,47 @@ func _paint_wall_and_base_pass_async(
 			batch.append(cell)
 			painted += 1
 			if painted >= maxi(1, async_paint_cells_per_frame):
-				walls_layer.set_wall_cells_direct(batch, wall_cells)
+				walls_layer.set_wall_cells_direct(batch, wall_cells, wall_atlas)
 				batch.clear()
 				painted = 0
 				await get_tree().process_frame
 		if not batch.is_empty():
-			walls_layer.set_wall_cells_direct(batch, wall_cells)
+			walls_layer.set_wall_cells_direct(batch, wall_cells, wall_atlas)
 	else:
 		walls_layer.set_cells_terrain_connect(wall_cells, CaveWallBase.TERRAIN_SET, CaveWallBase.WALL_TERRAIN)
 
 	var base_tiles := CaveWallBase.compute_base_tiles(wall_cells)
+	_drop_base_tiles_over_live_walls(base_tiles)
+	# set_base_tiles_direct() (not a raw per-cell set_cell() loop) so these
+	# writes land inside CaveWallsLayer's own _syncing guard -- an unguarded
+	# set_cell() here lets walls_layer's `changed` signal fire _on_changed(),
+	# which does a full _sync_base_tiles() rescan of every cap tile across
+	# the ENTIRE loaded world, not just this chunk. That cost doesn't show up
+	# in any CaveChunkProfile field (it runs off a signal, not this
+	# function's own timing), and it grows with total loaded chunk count --
+	# exactly the "gets worse as you explore, every chunk load spikes" shape.
+	walls_layer.set_base_tiles_direct(base_tiles, false)
 	for cell: Vector2i in base_tiles:
-		walls_layer.set_cell(cell, CaveWallsLayer.TILESET_SOURCE_ID, base_tiles[cell])
 		if ground_layer.get_cell_source_id(cell) == -1:
 			ground_layer.set_cell(cell, PLAIN_FLOOR_SOURCE_ID, PLAIN_FLOOR_ATLAS_COORDS)
-	return wall_cells
+	return {"wall_cells": wall_cells, "wall_atlas": wall_atlas, "base_tiles": base_tiles}
 
 
-## Must run after the wall pass, since mark_ore_cell() checks is_wall_cell().
-func _paint_ore_overlay_pass(data: CaveData, world_offset: Vector2i, wall_cells: Array[Vector2i]) -> void:
+## Must run after the wall pass, since mark_ore_cell()/mark_ore_cell_direct()
+## check wall status. `wall_pass_result` is the Dictionary returned by
+## _paint_wall_and_base_pass() -- when it carries a non-empty `wall_atlas`
+## (the wall pass used its direct peering-lookup, not the terrain-connect
+## fallback), the fast mark_ore_cell_direct() path is used, which resolves
+## enclosure/mirroring from that already-computed data instead of querying
+## CaveWallsLayer live per ore cell.
+func _paint_ore_overlay_pass(data: CaveData, world_offset: Vector2i, wall_pass_result: Dictionary) -> void:
 	var ore_types_by_tile := _ore_types_by_tile
 	if ore_types_by_tile.is_empty():
 		return
+	var wall_cells: Array = wall_pass_result["wall_cells"]
+	var wall_atlas: Dictionary = wall_pass_result["wall_atlas"]
+	var base_tiles: Dictionary = wall_pass_result["base_tiles"]
+	var use_direct := not wall_atlas.is_empty()
 	var wall_cell_set := {}
 	for cell in wall_cells:
 		wall_cell_set[cell] = true
@@ -464,13 +543,32 @@ func _paint_ore_overlay_pass(data: CaveData, world_offset: Vector2i, wall_cells:
 				continue
 			var world_cell := world_offset + local_cell
 			if wall_cell_set.has(world_cell):
-				ore_overlay_layer.mark_ore_cell(world_cell, ore_types_by_tile[tile_type])
+				var ore_type: OreType = ore_types_by_tile[tile_type]
+				if use_direct:
+					ore_overlay_layer.mark_ore_cell_direct(world_cell, ore_type, wall_cell_set, wall_atlas, base_tiles)
+				else:
+					ore_overlay_layer.mark_ore_cell(world_cell, ore_type)
 
 
-func _paint_ore_overlay_pass_async(data: CaveData, world_offset: Vector2i, wall_cells: Array[Vector2i]) -> void:
+## The direct path (see mark_ore_cell_direct()) resolves every ore cell from
+## plain dictionary lookups, no CaveWallsLayer engine queries -- cheap enough
+## (sub-millisecond for a whole chunk, confirmed via profiling) that spreading
+## it across frames buys nothing but added latency: yielding here forces the
+## chunk to sit through several needless frame waits it no longer needs,
+## which is wall-clock time a player-visible "chunk finishes loading" spike,
+## not GDScript compute. So the direct case runs the plain synchronous pass
+## in one shot. The live-query fallback (wall_atlas empty -- an incomplete
+## tileset, see set_wall_cells_direct()) is the one case still genuinely
+## slow per cell, so it keeps the original frame-budgeted yielding.
+func _paint_ore_overlay_pass_async(data: CaveData, world_offset: Vector2i, wall_pass_result: Dictionary) -> void:
 	var ore_types_by_tile := _ore_types_by_tile
 	if ore_types_by_tile.is_empty():
 		return
+	var wall_atlas: Dictionary = wall_pass_result["wall_atlas"]
+	if not wall_atlas.is_empty():
+		_paint_ore_overlay_pass(data, world_offset, wall_pass_result)
+		return
+	var wall_cells: Array = wall_pass_result["wall_cells"]
 	var wall_cell_set := {}
 	for cell in wall_cells:
 		wall_cell_set[cell] = true

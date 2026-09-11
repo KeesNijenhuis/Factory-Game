@@ -177,7 +177,7 @@ func _process(_delta: float) -> void:
 	if player == null or cave_builder == null:
 		return
 
-	_expire_chunk_grace_periods()
+	_release_pending_unloads()
 	var player_chunk := world_position_to_chunk_coord(player.global_position)
 	if player_chunk != _current_center_chunk:
 		_current_center_chunk = player_chunk
@@ -249,7 +249,6 @@ func _schedule_grace_period(coord: Vector2i) -> void:
 		return
 	_unload_deadlines[coord] = Time.get_ticks_msec() + grace_msec
 	_unload_order.append(coord)
-	_trim_grace_periods()
 
 
 func _cancel_grace_period(coord: Vector2i) -> void:
@@ -259,20 +258,37 @@ func _cancel_grace_period(coord: Vector2i) -> void:
 	_unload_order.erase(coord)
 
 
-func _expire_chunk_grace_periods() -> void:
+## Releases up to max_chunk_unloads_per_frame chunks per call: whichever
+## chunks in _unload_order (oldest-scheduled first -- since every entry gets
+## the same grace duration, oldest-scheduled and soonest-to-expire are the
+## same order) are either past their grace deadline or sitting beyond
+## retained_chunk_capacity. Replaces what used to be two separate unbounded
+## loops (_expire_chunk_grace_periods()/_trim_grace_periods()) that could
+## each release every qualifying chunk in one _process() tick -- moving far
+## enough in one go schedules a whole batch of chunks with the same
+## deadline, and releasing all of them (even at a few ms each) in a single
+## frame is exactly the "unload lag spike" a per-chunk unload_ms print never
+## shows, since no single _release_chunk() call was ever slow. Any backlog
+## beyond the per-tick budget just waits for the next tick(s), the same way
+## max_chunk_loads_in_flight already paces the load side.
+func _release_pending_unloads() -> void:
 	var now := Time.get_ticks_msec()
-	var expired: Array[Vector2i] = []
-	for coord: Vector2i in _unload_order:
-		if int(_unload_deadlines.get(coord, now + 1)) <= now:
-			expired.append(coord)
-	for coord in expired:
-		_release_chunk(coord)
-
-
-func _trim_grace_periods() -> void:
 	var capacity := maxi(0, streaming_config.retained_chunk_capacity)
-	while _unload_order.size() > capacity:
-		_release_chunk(_unload_order[0])
+	var budget := maxi(1, streaming_config.max_chunk_unloads_per_frame)
+	var batch_start := Time.get_ticks_usec()
+	var released := 0
+	while released < budget and not _unload_order.is_empty():
+		var coord: Vector2i = _unload_order[0]
+		var expired := int(_unload_deadlines.get(coord, now + 1)) <= now
+		var over_capacity := _unload_order.size() > capacity
+		if not expired and not over_capacity:
+			break
+		_release_chunk(coord)
+		released += 1
+	if released > 0 and DebugSettings.profile_cave_generation:
+		print("CaveChunkUnloadBatch released=%d backlog=%d batch_ms=%.1f" % [
+			released, _unload_order.size(), (Time.get_ticks_usec() - batch_start) / 1000.0,
+		])
 
 
 func _release_chunk(coord: Vector2i) -> void:

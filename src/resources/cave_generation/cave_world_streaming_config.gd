@@ -38,3 +38,13 @@ class_name CaveWorldStreamingConfig
 ## Never start a second chunk build while one is already running -- bounds
 ## the worst-case per-frame cost to exactly one chunk's, never compounding.
 @export var max_chunk_loads_in_flight: int = 1
+## Caps how many chunks CaveChunkStreamer actually unloads in a single
+## _process() tick. Moving far enough in one go (sprinting, fast travel, a
+## teleport) can push dozens of chunks past keep_radius_chunks at once, all
+## scheduled with the same grace-period deadline -- without this cap they'd
+## all expire and release together in one frame, and even a cheap per-chunk
+## unload (a few ms) adds up to a real stutter at that count. Any backlog
+## beyond this budget simply waits for the next tick(s) instead of forcing
+## every chunk through in one frame, the same way max_chunk_loads_in_flight
+## already paces loading.
+@export var max_chunk_unloads_per_frame: int = 3

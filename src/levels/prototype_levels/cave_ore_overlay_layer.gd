@@ -87,6 +87,30 @@ func mark_ore_cell(cell: Vector2i, ore_type: OreType) -> void:
 	_queue_debug_redraw()
 
 
+## Fast-path equivalent of mark_ore_cell(), used while painting a freshly
+## generated chunk. `cell` is assumed to already be a wall cell (callers only
+## ever reach this by scanning the same wall_cell_set) -- avoids the
+## is_wall_cell() check _apply_cell() otherwise needs. `wall_cell_set` is the
+## in-memory set of this chunk's wall cells (as built by CaveBuilder's wall
+## pass), `wall_atlas_by_cell` and `base_tiles` are the atlas coords that
+## pass already computed for each wall cell and base cap it painted --
+## letting enclosure and mirroring be resolved from dictionary lookups
+## instead of live CaveWallsLayer engine queries (get_cell_tile_data() /
+## get_cell_atlas_coords()), which is what made ore overlay painting slow.
+## Correctness for cells whose true neighborhood spans into an
+## already-loaded adjacent chunk (not covered by `wall_cell_set`, which is
+## this chunk's own cells only) is restored the same way CaveWallsLayer's own
+## boundary wall shapes are: CaveBuilder._refresh_chunk_boundary() re-derives
+## affected ore cells afterward via resync_around(), which uses the live,
+## fully accurate path.
+func mark_ore_cell_direct(cell: Vector2i, ore_type: OreType, wall_cell_set: Dictionary, wall_atlas_by_cell: Dictionary, base_tiles: Dictionary) -> void:
+	if _ore_cells.has(cell):
+		return
+	_ore_cells[cell] = ore_type
+	_apply_cell_direct(cell, wall_cell_set, wall_atlas_by_cell, base_tiles)
+	_queue_debug_redraw()
+
+
 func get_ore_cells() -> Dictionary:
 	return _ore_cells
 
@@ -170,6 +194,27 @@ func resync_around(changed_cells: Array[Vector2i]) -> void:
 		_apply_cell(cell)
 
 
+## Untracks and erases every one of `cells` that's currently a marked ore
+## cell, along with its base-cap mirror -- for a chunk being torn down
+## (CaveBuilder.clear_chunk()), where the caller already knows these cells
+## are gone rather than needing the live "is it still a wall" check
+## resync()/_apply_cell() do. Scoped to exactly the given cells instead of
+## resync()'s full re-derive of every ore cell across the whole loaded
+## world -- that blanket rescan is what made a single chunk unload cost as
+## much as painting several chunks. A neighboring chunk's own
+## boundary-adjacent ore art is handled separately, by
+## CaveBuilder._refresh_chunk_boundary()'s resync_around() call.
+func release_cells(cells: Array[Vector2i]) -> void:
+	for cell in cells:
+		if not _ore_cells.has(cell):
+			continue
+		erase_cell(cell)
+		_erase_if_unmanaged(cell + Vector2i.DOWN)
+		_ore_cells.erase(cell)
+		_fallback_variants.erase(cell)
+	_queue_debug_redraw()
+
+
 ## Picks the right art for `cell`, following the rule the game designer
 ## wants: fully-enclosed ore cells always get one of their ore's fallback
 ## sprites (picked at random); otherwise an exposed cell shows the mirrored
@@ -199,6 +244,27 @@ func _apply_cell(cell: Vector2i) -> void:
 	_apply_base_cell(cell, wall_has_ore, ore_type)
 
 
+## See mark_ore_cell_direct(). Same rule as _apply_cell(), minus the
+## is_wall_cell() check (guaranteed true by the caller) and with enclosure/
+## mirroring resolved from the precomputed dictionaries instead of live
+## CaveWallsLayer queries.
+func _apply_cell_direct(cell: Vector2i, wall_cell_set: Dictionary, wall_atlas_by_cell: Dictionary, base_tiles: Dictionary) -> void:
+	var ore_type: OreType = _ore_cells[cell]
+	var wall_has_ore: bool
+	if _is_fully_enclosed_direct(cell, wall_cell_set):
+		if not _fallback_variants.has(cell):
+			_fallback_variants[cell] = ore_type.fallback_variants.pick_random()
+		set_cell(cell, ore_type.fallback_source_id, _fallback_variants[cell])
+		wall_has_ore = true
+	else:
+		wall_has_ore = _mirror_atlas(wall_atlas_by_cell.get(cell, Vector2i(-1, -1)), cell, ore_type)
+	var base_cell := cell + Vector2i.DOWN
+	if wall_has_ore and base_tiles.has(base_cell):
+		_mirror_atlas(base_tiles[base_cell], base_cell, ore_type)
+	else:
+		_erase_if_unmanaged(base_cell)
+
+
 ## The base cap belonging to `wall_cell` (the tile directly below it) has no
 ## enclosed/exposed distinction of its own -- a cap only ever exists where
 ## the wall above is already exposed at its foot -- so it's just a mirror,
@@ -212,13 +278,20 @@ func _apply_base_cell(wall_cell: Vector2i, wall_has_ore: bool, ore_type: OreType
 		_erase_if_unmanaged(base_cell)
 
 
-## Copies whatever atlas piece walls_layer is currently showing at
-## `source_cell`, shifted by `ore_type.column_offset` columns and
+## Mirrors whatever atlas piece walls_layer is currently showing at
+## `source_cell` -- see _mirror_atlas() for the actual placement rule.
+func _mirror_cell(source_cell: Vector2i, target_cell: Vector2i, ore_type: OreType) -> bool:
+	return _mirror_atlas(walls_layer.get_cell_atlas_coords(source_cell), target_cell, ore_type)
+
+
+## Shared by _mirror_cell() (reads the wall atlas live) and
+## _apply_cell_direct() (reads it from a precomputed dictionary): copies
+## `source_atlas`, shifted by `ore_type.column_offset` columns and
 ## OVERLAY_ROW_OFFSET rows in the same atlas source, onto this layer at
 ## `target_cell` -- or erases `target_cell` if that specific piece has no
 ## drawn ore art. Returns whether a tile was set.
-func _mirror_cell(source_cell: Vector2i, target_cell: Vector2i, ore_type: OreType) -> bool:
-	var overlay_atlas: Vector2i = walls_layer.get_cell_atlas_coords(source_cell) + Vector2i(ore_type.column_offset, OVERLAY_ROW_OFFSET)
+func _mirror_atlas(source_atlas: Vector2i, target_cell: Vector2i, ore_type: OreType) -> bool:
+	var overlay_atlas: Vector2i = source_atlas + Vector2i(ore_type.column_offset, OVERLAY_ROW_OFFSET)
 	if tile_set.get_source(CaveWallsLayer.TILESET_SOURCE_ID).has_tile(overlay_atlas):
 		set_cell(target_cell, CaveWallsLayer.TILESET_SOURCE_ID, overlay_atlas)
 		return true
@@ -246,5 +319,15 @@ func _erase_if_unmanaged(cell: Vector2i) -> void:
 func _is_fully_enclosed(cell: Vector2i) -> bool:
 	for offset in CaveWallsLayer.NEIGHBOR_OFFSETS:
 		if not walls_layer.is_wall_cell(cell + offset):
+			return false
+	return true
+
+
+## Same rule as _is_fully_enclosed(), reading `wall_cell_set` (this chunk's
+## own wall cells, as built by CaveBuilder's wall pass) instead of querying
+## walls_layer live -- see mark_ore_cell_direct().
+func _is_fully_enclosed_direct(cell: Vector2i, wall_cell_set: Dictionary) -> bool:
+	for offset in CaveWallsLayer.NEIGHBOR_OFFSETS:
+		if not wall_cell_set.has(cell + offset):
 			return false
 	return true

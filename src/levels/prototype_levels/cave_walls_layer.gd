@@ -376,7 +376,12 @@ func _is_base_cell(cell: Vector2i) -> bool:
 ## `all_wall_cells` is supplied by generated chunks because their cells do
 ## not exist on the layer yet. Returns false when the tileset has no usable
 ## lookup, allowing callers to retain the terrain-connect fallback.
-func set_wall_cells_direct(cells: Array[Vector2i], all_wall_cells: Array[Vector2i] = []) -> bool:
+## `out_atlas`, if given, is populated with cell -> atlas_coords for every
+## cell painted -- Dictionary is a reference type in GDScript, so this hands
+## the caller the same per-cell atlas assignment this method already
+## computed, letting e.g. CaveBuilder's ore overlay pass reuse it instead of
+## re-querying this layer per ore cell (see CaveOreOverlayLayer.mark_ore_cell_direct()).
+func set_wall_cells_direct(cells: Array[Vector2i], all_wall_cells: Array[Vector2i] = [], out_atlas: Dictionary = {}) -> bool:
 	var lookup := _get_wall_tile_lookup()
 	if lookup.is_empty() or cells.is_empty():
 		return false
@@ -404,6 +409,7 @@ func set_wall_cells_direct(cells: Array[Vector2i], all_wall_cells: Array[Vector2
 	for cell in tile_for_cell:
 		var tile: Dictionary = tile_for_cell[cell]
 		set_cell(cell, tile["source_id"], tile["atlas_coords"], tile["alternative"])
+		out_atlas[cell] = tile["atlas_coords"]
 	_syncing = false
 	return true
 
@@ -462,6 +468,21 @@ func refresh_base_tiles_around(wall_positions: Array[Vector2i]) -> void:
 ## correct while making generated painting cheap.
 func refresh_wall_cells_direct(cells: Array[Vector2i]) -> bool:
 	return set_wall_cells_direct(cells)
+
+
+## Erases `cells` with the layer's own `changed`-signal auto-sync suppressed,
+## same as set_wall_cells_direct()/set_base_tiles_direct(). An unguarded
+## erase_cell() call here would let each individual erasure trigger
+## _on_changed() -> _sync_base_tiles(), which rescans every cap tile across
+## the ENTIRE layer (every loaded chunk, not just these cells) -- for a
+## caller erasing dozens to hundreds of cells at once (a whole chunk's worth,
+## e.g. CaveBuilder.clear_chunk()), that's the difference between one erase
+## pass and hundreds of full-layer rescans.
+func erase_cells_direct(cells: Array[Vector2i]) -> void:
+	_syncing = true
+	for cell in cells:
+		erase_cell(cell)
+	_syncing = false
 
 
 func _get_wall_tile_lookup() -> Dictionary:
